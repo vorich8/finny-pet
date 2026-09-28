@@ -1,0 +1,19 @@
+{
+  "version":1,
+  "stages":["малыш","подросший","взрослый"],
+  "emotions":["радость","грусть","удивление","сон","еда","игра"],
+  "variants":[
+    {"id":"finny_blue","species":"Финни","palette":"синий","accessory":"зелёный шарф"},
+    {"id":"finny_sky","species":"Финни","palette":"голубой","accessory":"жёлтый шарф"},
+    {"id":"finny_lilac","species":"Финни","palette":"сиренево-синий","accessory":"коралловый шарф"},
+    {"id":"hamster_orange","species":"Хомяк","palette":"рыжий","accessory":"зелёный шарф"},
+    {"id":"hamster_gold","species":"Хомяк","palette":"золотистый","accessory":"синий шарф"},
+    {"id":"hamster_brown","species":"Хомяк","palette":"светло-коричневый","accessory":"фиолетовый шарф"},
+    {"id":"axolotl_pink","species":"Аксолотль","palette":"розовый","accessory":"зелёный шарф"},
+    {"id":"axolotl_lilac","species":"Аксолотль","palette":"сиреневый","accessory":"жёлтый шарф"},
+    {"id":"axolotl_coral","species":"Аксолотль","palette":"коралловый","accessory":"синий шарф"},
+    {"id":"dragon_coral","species":"Дракончик","palette":"коралловый","accessory":"зелёный шарф"},
+    {"id":"dragon_amber","species":"Дракончик","palette":"янтарный","accessory":"синий шарф"},
+    {"id":"dragon_plum","species":"Дракончик","palette":"сливовый","accessory":"жёлтый шарф"}
+  ]
+}

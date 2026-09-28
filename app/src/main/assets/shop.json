@@ -1,0 +1,14 @@
+{
+  "version":1,
+  "items":[
+    {"id":"food","title":"Еда","price":30,"required":true},
+    {"id":"water","title":"Вода","price":15,"required":true},
+    {"id":"medicine","title":"Лекарство","price":20,"required":true},
+    {"id":"rent","title":"Аренда домика","price":30,"required":true},
+    {"id":"toy","title":"Игрушка","price":20,"required":false},
+    {"id":"ball","title":"Мяч","price":25,"required":false},
+    {"id":"ice_cream","title":"Мороженое","price":10,"required":false},
+    {"id":"book","title":"Книжка","price":20,"required":false}
+  ],
+  "period4Prices":{"food":35,"water":20,"toy":25,"ball":30,"book":20,"ice_cream":15}
+}

@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "levelStarThresholds": [0, 3, 7, 12, 18, 25],
+  "passiveIncomePerMinute": [0, 1, 2, 3, 4, 5],
+  "taskRewards": {"easy": 8, "medium": 15, "hard": 25},
+  "reserveWarningBelow": 20,
+  "needs": {"foodLossPerMinute": 1, "waterLossPerMinute": 1, "moodLossEveryMinutes": 2},
+  "note": "Legacy six-game amounts remain in games.json and are not altered by this file."
+}

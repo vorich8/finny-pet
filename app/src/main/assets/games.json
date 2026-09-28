@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "periods": [
+    {"period":1,"games":["scales","piggy_bank"]},
+    {"period":2,"games":["priorities","piggy_bank","shop"]},
+    {"period":3,"games":["scales","piggy_bank","change"]},
+    {"period":4,"games":["priorities","goal","shop"]},
+    {"period":5,"games":["priorities","goal","change"]}
+  ],
+  "scales": {
+    "periods":[1,3],
+    "levels":[
+      {"level":1,"cards":[50,30,-20,-30,-20],"balance":10,"rewardCoins":10,"stars":1},
+      {"level":2,"cards":[70,30,-25,-35,-20,-10],"balance":10},
+      {"level":3,"cards":[70,50,30,-30,-40,-20,-25,-15],"balance":20}
+    ]
+  },
+  "priorities": {
+    "periods":[2,4,5],
+    "levels":[
+      {"period":2,"budget":50,"items":{"Еда":20,"Вода":10,"Игрушка":25,"Мороженое":10},"rewardCoins":10,"stars":1},
+      {"period":4,"budget":70,"items":{"Аренда":30,"Еда":20,"Вода":10,"Игрушка":25,"Мяч":20},"rewardCoins":15},
+      {"period":5,"budget":100,"items":{"Еда":25,"Вода":15,"Лекарство":20,"Игрушка":25,"Мяч":20,"Мороженое":10,"Накопление":20},"rewardCoins":20}
+    ]
+  },
+  "piggy_bank": {
+    "coinValues":[1,2,5],
+    "levels":[
+      {"period":1,"seconds":30,"coins":14,"temptations":6,"maximum":35},
+      {"period":2,"seconds":40,"coins":16,"temptations":8},
+      {"period":3,"seconds":50,"coins":18,"temptations":12,"faster":true}
+    ],
+    "stars":{"3":{"minimumPercent":90,"maximumTemptations":0},"2":{"minimumPercent":70,"maximumTemptations":1},"1":{"minimumPercent":50}}
+  },
+  "goal": {
+    "buttons":[5,10,15,20],
+    "period4":{"goalCost":100,"incomes":[30,30,40],"expenses":[10,10,15]},
+    "period5":{"goalCost":150,"incomes":[40,50,40,35],"expenses":[15,20,10,15]},
+    "rewards":{"50":15,"100":25,"150":40}
+  },
+  "shop":{"period2":{"budget":100,"required":["food"],"rewardCoins":15},"period4":{"budget":120,"required":{"food":35,"water":20},"rewardCoins":20}},
+  "change":{"period3":[[35,50,15],[48,50,2],[25,50,25]],"period5":[[67,100,33],[85,100,15],[74,100,26]],"denominations":[1,2,5,10,20,50],"rewardCoins":20,"stars":1}
+}

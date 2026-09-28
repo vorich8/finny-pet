@@ -1,0 +1,25 @@
+# Gradle and Android Studio
+.gradle/
+.gradle-user/
+.idea/
+**/build/
+local.properties
+*.iml
+
+# Local toolchains and temporary diagnostics
+.tooling/
+.jdk17/
+.tmp/
+*.hprof
+*.log
+
+# Generated packages and local QA captures
+*.apk
+*.aab
+/*.png
+/*.xml
+html-reference-shots/
+
+# OS files
+.DS_Store
+Thumbs.db
