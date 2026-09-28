@@ -27,9 +27,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import com.finny.pet.ui.theme.*
 import com.finny.pet.R
+import com.finny.pet.audio.FinnyAudio
+import com.finny.pet.audio.FinnySfx
 import com.finny.pet.ui.screens.VisualPrefs
 
-@Composable fun FinnyButton(text:String, onClick:()->Unit, enabled:Boolean=true, modifier:Modifier=Modifier) = Button(onClick=onClick, enabled=enabled, modifier=modifier.heightIn(min=54.dp).shadow(if(enabled)7.dp else 0.dp,CircleShape), shape=CircleShape, colors=ButtonDefaults.buttonColors(containerColor=FinnyBlue,disabledContainerColor=Color(0xFFB9C4DB)),border=BorderStroke(1.dp,Color.White.copy(.55f))) { Text(text, fontSize=16.sp, fontWeight=FontWeight.ExtraBold) }
+@Composable fun FinnyButton(text:String, onClick:()->Unit, enabled:Boolean=true, modifier:Modifier=Modifier) = Button(onClick={FinnyAudio.play(FinnySfx.TAP);onClick()}, enabled=enabled, modifier=modifier.heightIn(min=54.dp).shadow(if(enabled)7.dp else 0.dp,CircleShape), shape=CircleShape, colors=ButtonDefaults.buttonColors(containerColor=FinnyBlue,disabledContainerColor=Color(0xFFB9C4DB)),border=BorderStroke(1.dp,Color.White.copy(.55f))) { Text(text, fontSize=16.sp, fontWeight=FontWeight.ExtraBold) }
 
 @Composable fun FinnyCard(modifier:Modifier=Modifier, content: @Composable ColumnScope.() -> Unit) = Card(modifier.shadow(10.dp,MaterialTheme.shapes.large), shape=MaterialTheme.shapes.large, border=BorderStroke(1.dp,Color(0xFFD6DFEE)), colors=CardDefaults.cardColors(containerColor=Color.White)) { Column(Modifier.background(Brush.verticalGradient(listOf(Color.White,Color(0xFFF3F7FF)))).padding(16.dp), verticalArrangement=Arrangement.spacedBy(10.dp), content=content) }
 
@@ -99,4 +101,8 @@ import com.finny.pet.ui.screens.VisualPrefs
         Text(if(index<=stars)"★" else "☆",fontSize=38.sp,color=FinnyYellow,modifier=Modifier.graphicsLayer{scaleX=scale.value;scaleY=scale.value})
     }}
 }
-@Composable fun FeedbackDialog(title:String,message:String,onDismiss:()->Unit){ AlertDialog(onDismissRequest=onDismiss,confirmButton={FinnyButton("Понятно",onDismiss)},title={Text(title)},text={Text(message,fontSize=16.sp)}) }
+@Composable fun FeedbackDialog(title:String,message:String,onDismiss:()->Unit,sound:FinnySfx?=null){
+    val effect=sound ?: if(title.startsWith("Почему")||title.startsWith("Проверь")||title.startsWith("Проверим")||title.startsWith("Давай разберёмся"))FinnySfx.WARNING else null
+    LaunchedEffect(message,effect){effect?.let(FinnyAudio::play)}
+    AlertDialog(onDismissRequest=onDismiss,confirmButton={FinnyButton("Понятно",onDismiss)},title={Text(title)},text={Text(message,fontSize=16.sp)})
+}

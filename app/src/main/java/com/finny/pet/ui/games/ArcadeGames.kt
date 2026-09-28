@@ -30,6 +30,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.finny.pet.domain.GameEconomy
 import com.finny.pet.domain.usecase.EarnArcadeReward
+import com.finny.pet.audio.FinnyAudio
+import com.finny.pet.audio.FinnySfx
 import com.finny.pet.ui.components.FinnyButton
 import com.finny.pet.ui.components.FinnyCard
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,7 +43,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ArcadeViewModel @Inject constructor(private val earn:EarnArcadeReward):ViewModel(){
     private var finishing=false
-    fun finish(game:String,onDone:()->Unit){if(finishing)return;finishing=true;viewModelScope.launch{earn(game);onDone()}}
+    fun finish(game:String,onDone:()->Unit){if(finishing)return;finishing=true;viewModelScope.launch{earn(game);FinnyAudio.play(FinnySfx.SUCCESS);onDone()}}
 }
 
 @Composable fun ArcadeGameScreen(kind:String,onBack:()->Unit,onDone:()->Unit,vm:ArcadeViewModel=hiltViewModel()){
@@ -185,7 +187,7 @@ private data class SpaceObject(val lane:Int,val crystal:Boolean,val icon:String)
 
 @Composable private fun PairsGame(done:()->Unit){
     val symbols=listOf("🍎","⭐","🎈","🐾","◎","💎");val cards=remember{(symbols+symbols).shuffled()};val open=remember{mutableStateListOf<Int>()};val matched=remember{mutableStateListOf<Int>()};var locked by remember{mutableStateOf(false)}
-    LaunchedEffect(open.size){if(open.size==2){locked=true;delay(550);if(cards[open[0]]==cards[open[1]]){matched.addAll(open);if(matched.size>=cards.size)done()};open.clear();locked=false}}
+    LaunchedEffect(open.size){if(open.size==2){locked=true;delay(550);if(cards[open[0]]==cards[open[1]]){matched.addAll(open);FinnyAudio.play(FinnySfx.PLACE);if(matched.size>=cards.size)done()}else FinnyAudio.play(FinnySfx.WARNING);open.clear();locked=false}}
     FinnyCard(Modifier.fillMaxWidth()){
         Text("Пары: ${matched.size/2} / 6",fontSize=21.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text("Открой две одинаковые карточки",color=Color(0xFF5A6780))
         Column(Modifier.align(Alignment.CenterHorizontally),verticalArrangement=Arrangement.spacedBy(8.dp)){repeat(3){r->Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){repeat(4){c->val i=r*4+c;val visible=i in open||i in matched;Surface(Modifier.size(69.dp).clickable(enabled=!locked&&i !in matched&&i !in open){open.add(i)},shape=RoundedCornerShape(14.dp),color=if(visible)Color(0xFFFFF2CB)else Color(0xFFF59E0B),border=BorderStroke(2.dp,Color(0xFFFFD54A)),shadowElevation=4.dp){Box(contentAlignment=Alignment.Center){Text(if(visible)cards[i] else "?",fontSize=31.sp,fontWeight=FontWeight.Black,color=Color.White)}}}}}}

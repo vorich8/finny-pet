@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.finny.pet.R
+import com.finny.pet.audio.FinnyAudio
+import com.finny.pet.audio.FinnySfx
 import com.finny.pet.navigation.Routes
 import com.finny.pet.domain.GameEconomy
 import com.finny.pet.ui.components.*
@@ -63,7 +65,7 @@ private fun workGameIcon(id:String):ImageVector=when(id){
         runner.animateTo(150f,tween(850,easing=FastOutSlowInEasing))
         onBuilding(destination.id)
     }
-    locked?.let{pin->FeedbackDialog("Пока закрыто",if(pin.id=="arcade")"Игровой центр откроется после завершения первого дня." else "${pin.title} откроется на уровне ${pin.level}."){locked=null}}
+    locked?.let{pin->FeedbackDialog("Пока закрыто",if(pin.id=="arcade")"Игровой центр откроется после завершения первого дня." else "${pin.title} откроется на уровне ${pin.level}.",{locked=null},FinnySfx.WARNING)}
     val motion=rememberInfiniteTransition(label="mapMotion")
     val bob by motion.animateFloat(-5f,5f,infiniteRepeatable(tween(1100,easing=EaseInOutSine),RepeatMode.Reverse),label="pinBob")
     val pulse by motion.animateFloat(.96f,1.07f,infiniteRepeatable(tween(850,easing=EaseInOutSine),RepeatMode.Reverse),label="pinPulse")
@@ -73,7 +75,7 @@ private fun workGameIcon(id:String):ImageVector=when(id){
         Surface(Modifier.align(Alignment.TopCenter).padding(top=7.dp),shape=CircleShape,color=Color(0xE6203F73),shadowElevation=6.dp){Row(Modifier.padding(start=15.dp,end=7.dp,top=6.dp,bottom=6.dp),verticalAlignment=Alignment.CenterVertically){Text("Город Финни",color=Color.White,fontWeight=FontWeight.ExtraBold,fontSize=17.sp);Spacer(Modifier.width(10.dp));CoinCounter(coins)}}
         pins.forEach{pin->
             val unlocked=if(pin.id=="arcade")period>=2 else level>=pin.level
-            Column(Modifier.offset(maxWidth*pin.x-48.dp,maxHeight*pin.y-30.dp).width(96.dp).clickable(enabled=travelling==null){if(unlocked)travelling=pin else locked=pin},horizontalAlignment=Alignment.CenterHorizontally){
+            Column(Modifier.offset(maxWidth*pin.x-48.dp,maxHeight*pin.y-30.dp).width(96.dp).clickable(enabled=travelling==null){if(unlocked){FinnyAudio.play(FinnySfx.NAVIGATE);travelling=pin}else locked=pin},horizontalAlignment=Alignment.CenterHorizontally){
                 Surface(Modifier.size(54.dp).graphicsLayer{translationY=if(unlocked)bob else 0f;scaleX=if(unlocked)pulse else 1f;scaleY=if(unlocked)pulse else 1f},shape=CircleShape,color=if(unlocked)Color.White else Color(0xFFE7EAF0),border=BorderStroke(2.dp,if(unlocked)Color(0xFFFFD34E) else Color.White),shadowElevation=10.dp){
                     Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Icon(if(unlocked)pin.icon else Icons.Default.Lock,if(unlocked)pin.title else "Закрыто",Modifier.size(28.dp),tint=if(unlocked)Color(0xFF315EBA) else Color(0xFF7D8798))}
                 }
@@ -98,8 +100,8 @@ private fun workGameIcon(id:String):ImageVector=when(id){
     var section by rememberSaveable(id){mutableIntStateOf(0)}
     val info=when(id){"home"->Triple("Дом Финни",Icons.Default.Home,Color(0xFF70B9F3));"food"->Triple("Магазин продуктов",Icons.Default.ShoppingBasket,Color(0xFFFFA84D));"work"->Triple("Работа",Icons.Default.Work,Color(0xFF6F91E8));"arcade"->Triple("Игровой центр",Icons.Default.SportsEsports,Color(0xFF9A70DC));"mall"->Triple("Торговый центр",Icons.Default.Store,Color(0xFFFF7C9F));else->Triple("Банк",Icons.Default.AccountBalance,Color(0xFF5BC49B))}
     val background=when(id){"home"->R.drawable.room_background;"food"->R.drawable.interior_food;"work"->R.drawable.interior_work;"arcade"->R.drawable.interior_arcade;"mall"->R.drawable.interior_mall;else->R.drawable.interior_bank}
-    state.message?.let{FeedbackDialog(if(it.contains("не хватает",true))"Монет пока не хватает" else "Покупка готова",it,vm::clear)}
-    skinState.message?.let{FeedbackDialog(if(it.contains("не хватает",true))"Монет пока не хватает" else "Гардероб",it,skinVm::clear)}
+    state.message?.let{FeedbackDialog(if(it.contains("не хватает",true))"Монет пока не хватает" else "Покупка готова",it,vm::clear,if(it.contains("не хватает",true))FinnySfx.WARNING else FinnySfx.COIN)}
+    skinState.message?.let{FeedbackDialog(if(it.contains("не хватает",true))"Монет пока не хватает" else "Гардероб",it,skinVm::clear,if(it.contains("не хватает",true))FinnySfx.WARNING else FinnySfx.COIN)}
     state.pending?.let{g->AlertDialog(onDismissRequest=vm::clear,title={Text("Оставить на важное?")},text={Text("После покупки останется меньше 20 монет. Можно сохранить их на еду, воду или цель.")},dismissButton={TextButton(onClick=vm::clear){Text("Оставить на важное")}},confirmButton={Button(onClick={vm.buy(g,true)}){Text("Всё равно купить")}})}
     skinState.pending?.let{g->AlertDialog(onDismissRequest=skinVm::clear,title={Text("Оставить на важное?")},text={Text("Похоже, после покупки останется мало денег. Оставим немного на еду, воду и лекарства?")},dismissButton={TextButton(onClick=skinVm::clear){Text("Оставить на важное")}},confirmButton={Button(onClick={skinVm.buy(g,true)}){Text("Всё равно купить")}})}
     Box(Modifier.fillMaxSize()){

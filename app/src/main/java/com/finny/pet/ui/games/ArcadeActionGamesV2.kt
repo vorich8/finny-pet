@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finny.pet.ui.components.FinnyButton
 import com.finny.pet.ui.components.FinnyCard
+import com.finny.pet.audio.FinnyAudio
+import com.finny.pet.audio.FinnySfx
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.random.Random
@@ -49,7 +51,8 @@ fun RocketGame(done:()->Unit) {
                 if(moved.x<=.13f) {
                     objects.removeAt(i)
                     if(moved.lane==lane) {
-                        if(moved.crystal) crystals++ else lives--
+                        if(moved.crystal) { crystals++; FinnyAudio.play(FinnySfx.COIN) }
+                        else { lives--; FinnyAudio.play(FinnySfx.WARNING) }
                     }
                 } else objects[i]=moved
             }
@@ -100,7 +103,10 @@ fun CatchGame(done:()->Unit) {
                 val moved=objects[i].copy(y=objects[i].y+.018f)
                 if(moved.y>=.82f) {
                     objects.removeAt(i)
-                    if(abs(moved.x-basketX)<.16f) { if(moved.bomb) mistakes++ else caught++ }
+                    if(abs(moved.x-basketX)<.16f) {
+                        if(moved.bomb) { mistakes++; FinnyAudio.play(FinnySfx.WARNING) }
+                        else { caught++; FinnyAudio.play(FinnySfx.COIN) }
+                    }
                 } else objects[i]=moved
             }
             if(caught>=8) { running=false;done() }
@@ -143,10 +149,12 @@ fun JumperGame(done:()->Unit) {
             if(running) {
                 if(lane==safeLane) {
                     level++
+                    FinnyAudio.play(FinnySfx.PLACE)
                     energy=(energy+1).coerceAtMost(3)
                     if(level>=10) { running=false;done() }
                 } else {
                     energy--
+                    FinnyAudio.play(FinnySfx.WARNING)
                     if(energy<=0) {running=false;ended=true}
                 }
                 safeLane=Random.nextInt(3)

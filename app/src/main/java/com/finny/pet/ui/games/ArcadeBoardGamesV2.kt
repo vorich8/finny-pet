@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finny.pet.ui.components.FinnyCard
+import com.finny.pet.audio.FinnyAudio
+import com.finny.pet.audio.FinnySfx
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.random.Random
@@ -62,11 +64,13 @@ fun SnakeGame(done: () -> Unit) {
         if (next.x !in 0 until columns || next.y !in 0 until rows || next in collisionBody) {
             running = false
             crashed = true
+            FinnyAudio.play(FinnySfx.WARNING)
             return
         }
         body = listOf(next) + if (eats) body else body.dropLast(1)
         if (eats) {
             collected++
+            FinnyAudio.play(FinnySfx.COIN)
             if (collected >= 4) {
                 running = false
                 done()
@@ -194,10 +198,11 @@ fun TetrisGame(done: () -> Unit) {
         }
         locked = rebuilt
         lines += clear.size
+        FinnyAudio.play(if (clear.isEmpty()) FinnySfx.PLACE else FinnySfx.COIN)
         if (lines >= 2) { running = false; done(); return }
         active = FallingBlock(next)
         next = Random.nextInt(shapes.size)
-        if (!fits(active)) { running = false; over = true }
+        if (!fits(active)) { running = false; over = true; FinnyAudio.play(FinnySfx.WARNING) }
     }
     fun descend() { if (!running) return; val moved = active.copy(y = active.y + 1); if (fits(moved)) active = moved else settle() }
     fun move(dx: Int) { if (running) active.copy(x = active.x + dx).takeIf(::fits)?.let { active = it } }

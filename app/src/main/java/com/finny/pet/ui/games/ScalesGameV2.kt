@@ -37,6 +37,8 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.finny.pet.domain.MoneyCard
+import com.finny.pet.audio.FinnyAudio
+import com.finny.pet.audio.FinnySfx
 import com.finny.pet.ui.components.FeedbackDialog
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -46,7 +48,10 @@ import kotlin.math.roundToInt
 fun ScalesScreen(onBack: () -> Unit, onDone: (Int) -> Unit, vm: ScalesViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     if (state.message.isNotEmpty() && state.message != "Верно!") {
-        FeedbackDialog("Проверим решение", state.message, vm::clearMessage)
+        FeedbackDialog("Проверим решение", state.message, vm::clearMessage, FinnySfx.WARNING)
+    }
+    LaunchedEffect(state.cards.size) {
+        if (state.message == "Верно!") FinnyAudio.play(FinnySfx.PLACE)
     }
     var selectedId by remember(state.level) { mutableStateOf<String?>(null) }
     val selected = state.cards.firstOrNull { it.id == selectedId }
