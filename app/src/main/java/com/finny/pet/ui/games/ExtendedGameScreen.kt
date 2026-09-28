@@ -108,7 +108,7 @@ private fun listLevel(level:Int):Pair<Int,List<ListedItem>>{
     val all=listOf(ListedItem("food","🍗","Корм",20,true),ListedItem("water","💧","Вода",10,true),ListedItem("med","💊","Лекарство",15,true),ListedItem("rent","🏠","Домик",25,true),ListedItem("book","📚","Книга",10,true))
     val ids=when(level){1->setOf("food","water");2->setOf("food","med");3->setOf("rent","food","water");4->setOf("food","water","med");5->setOf("rent","food","med");6,7,8->setOf("rent","food","water","med");else->setOf("rent","food","water","med","book")}
     val required=all.filter{it.id in ids}
-    val extras=listOf(ListedItem("toy","🧸","Игрушка",25,false),ListedItem("ice","🍦","Мороженое",15,false),ListedItem("ball","⚽","Мяч",20,false),ListedItem("console","🎮","Приставка",35,false))
+    val extras=listOf(ListedItem("toy","🐻","Игрушка",25,false),ListedItem("ice","🍦","Мороженое",15,false),ListedItem("ball","⚽","Мяч",20,false),ListedItem("console","🎮","Приставка",35,false))
     return budget to (required+extras).shuffled(Random(level))
 }
 
@@ -211,7 +211,7 @@ private data class RaceRunner(val id:Int,val item:RaceItem,val lane:Int,val x:Fl
 private data class TrafficCard(val icon:String,val name:String,val zone:Int,val explanation:String)
 private val trafficCards=listOf(
     TrafficCard("🍗","Корм",0,"Корм нужен питомцу каждый день — это обязательная покупка."),TrafficCard("💧","Вода",0,"Без воды нельзя обойтись — покупаем сейчас."),TrafficCard("💊","Лекарство",0,"Лечение важно для здоровья питомца."),TrafficCard("🏠","Жильё",0,"Безопасный дом — обязательный расход."),
-    TrafficCard("🧸","Игрушка",1,"Игрушка радует, но её можно купить позже."),TrafficCard("📚","Книга",1,"Полезное желание: запланируй после обязательных расходов."),TrafficCard("⚽","Мяч",1,"Мяч можно купить, если после важного остались деньги."),
+    TrafficCard("🐻","Игрушка",1,"Игрушка радует, но её можно купить позже."),TrafficCard("📚","Книга",1,"Полезное желание: запланируй после обязательных расходов."),TrafficCard("⚽","Мяч",1,"Мяч можно купить, если после важного остались деньги."),
     TrafficCard("🎮","Вторая приставка",2,"Это дорогая повторная покупка — сейчас лучше отказаться."),TrafficCard("🍬","Лишние сладости",2,"Импульсивную покупку лучше пропустить."),TrafficCard("✨","Случайный сувенир",2,"Если вещь не нужна и не запланирована, деньги лучше сохранить.")
 )
 

@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -44,9 +46,9 @@ class ArcadeViewModel @Inject constructor(private val earn:EarnArcadeReward):Vie
 
 @Composable fun ArcadeGameScreen(kind:String,onBack:()->Unit,onDone:()->Unit,vm:ArcadeViewModel=hiltViewModel()){
     val title=when(kind){"snake"->"Змейка";"rocket"->"Ракета Финни";"pairs"->"Пары";"catch"->"Корзинка";"jumper"->"Джампер";else->"Block Blast"}
-    val icon=when(kind){"snake"->"🐍";"rocket"->"🚀";"pairs"->"🃏";"catch"->"🧺";"jumper"->"🦘";else->"💥"}
+    val icon=when(kind){"snake"->"🐍";"rocket"->"🚀";"pairs"->"🃏";"catch"->"🛒";"jumper"->"🐾";else->"💥"}
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF120927),Color(0xFF37205E),Color(0xFF080E22))))){
-        Column(Modifier.fillMaxSize().navigationBarsPadding().padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(9.dp)){
+        Column(Modifier.fillMaxSize().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(9.dp)){
             Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp),color=Color(0xFF121C35),shadowElevation=9.dp,border=androidx.compose.foundation.BorderStroke(2.dp,Color(0xFFA855F7))){
                 Row(Modifier.fillMaxWidth().padding(7.dp),verticalAlignment=Alignment.CenterVertically){IconButton(onClick=onBack){Icon(Icons.Default.ArrowBack,"Назад",tint=Color.White)};Text(icon,fontSize=27.sp);Spacer(Modifier.width(8.dp));Column(Modifier.weight(1f)){Text(title,fontSize=22.sp,fontWeight=FontWeight.Black,color=Color.White,maxLines=1,overflow=TextOverflow.Ellipsis);Text("Игровой зал • награда ${GameEconomy.arcadeReward} монет",fontSize=12.sp,color=Color(0xFFC7D2FE),maxLines=2,overflow=TextOverflow.Ellipsis)};Text("₽",fontSize=25.sp,color=Color(0xFFFFD45B),fontWeight=FontWeight.Black)}
             }
@@ -68,8 +70,8 @@ private val arcadeCabinets=listOf(
     ArcadeCabinet("blockblast","💥","BLOCK BLAST","2 линии = победа",Color(0xFF38BDF8),Color(0xFF075985)),
     ArcadeCabinet("pairs","🃏","ПАРЫ","Найди 6 совпадений",Color(0xFFF59E0B),Color(0xFFB45309)),
     ArcadeCabinet("rocket","🚀","РАКЕТА","10 кристаллов = победа",Color(0xFFEC4899),Color(0xFF831843)),
-    ArcadeCabinet("catch","🧺","КОРЗИНКА","Лови фрукты, не бомбы",Color(0xFFA855F7),Color(0xFF581C87)),
-    ArcadeCabinet("jumper","🦘","ДЖАМПЕР","Прыгай по платформам",Color(0xFF14B8A6),Color(0xFF134E4A))
+    ArcadeCabinet("catch","🛒","КОРЗИНКА","Лови фрукты, не бомбы",Color(0xFFA855F7),Color(0xFF581C87)),
+    ArcadeCabinet("jumper","🐾","ДЖАМПЕР","Прыгай по платформам",Color(0xFF14B8A6),Color(0xFF134E4A))
 )
 
 @Composable fun ArcadeHallPanel(navigate:(String)->Unit){
@@ -113,7 +115,7 @@ private val tetrisColors=listOf(Color(0xFF58C7F2),Color(0xFFFFC34D),Color(0xFFC1
 private fun rotated(type:Int,rotation:Int):List<Cell>{var r=tetrominoes[type];repeat(rotation%4){r=r.map{Cell(-it.y,it.x)}.let{c->val mx=c.minOf{it.x};val my=c.minOf{it.y};c.map{Cell(it.x-mx,it.y-my)}}};return r}
 private fun cells(p:Piece)=rotated(p.type,p.rotation).map{Cell(it.x+p.x,it.y+p.y)}
 
-@Composable private fun TetrisGame(done:()->Unit){
+@Composable private fun LegacyTetrisGame(done:()->Unit){
     val columns=10;val rows=14
     var board by remember{mutableStateOf<Map<Int,Int>>(emptyMap())};var piece by remember{mutableStateOf(Piece(Random.nextInt(tetrominoes.size)))};var nextType by remember{mutableIntStateOf(Random.nextInt(tetrominoes.size))}
     var lines by remember{mutableIntStateOf(0)};var score by remember{mutableIntStateOf(0)};var running by remember{mutableStateOf(true)};var gameOver by remember{mutableStateOf(false)};var tick by remember{mutableIntStateOf(0)}
@@ -139,7 +141,7 @@ private fun cells(p:Piece)=rotated(p.type,p.rotation).map{Cell(it.x+p.x,it.y+p.y
 private enum class Direction(val dx:Int,val dy:Int){UP(0,-1),DOWN(0,1),LEFT(-1,0),RIGHT(1,0)}
 private fun opposite(a:Direction,b:Direction)=(a==Direction.UP&&b==Direction.DOWN)||(a==Direction.DOWN&&b==Direction.UP)||(a==Direction.LEFT&&b==Direction.RIGHT)||(a==Direction.RIGHT&&b==Direction.LEFT)
 
-@Composable private fun SnakeGame(done:()->Unit){
+@Composable private fun LegacySnakeGame(done:()->Unit){
     val columns=12;val rows=14
     var snake by remember{mutableStateOf(listOf(Cell(6,7),Cell(5,7),Cell(4,7)))};var direction by remember{mutableStateOf(Direction.RIGHT)};var queued by remember{mutableStateOf(Direction.RIGHT)};var apple by remember{mutableStateOf(Cell(9,7))}
     var apples by remember{mutableIntStateOf(0)};var running by remember{mutableStateOf(true)};var gameOver by remember{mutableStateOf(false)};var tick by remember{mutableIntStateOf(0)}
@@ -159,7 +161,7 @@ private fun opposite(a:Direction,b:Direction)=(a==Direction.UP&&b==Direction.DOW
 
 private data class SpaceObject(val lane:Int,val crystal:Boolean,val icon:String)
 
-@Composable private fun RocketGame(done:()->Unit){
+@Composable private fun LegacyRocketGame(done:()->Unit){
     val objects=remember{List(24){i->val hazard=i%4==3;SpaceObject((i*3+1)%5,!hazard,if(hazard)listOf("🪨","🛸","🪐")[i%3] else "💎")}}
     var lane by remember{mutableIntStateOf(2)};var index by remember{mutableIntStateOf(0)};var crystals by remember{mutableIntStateOf(0)};var lives by remember{mutableIntStateOf(3)};var finished by remember{mutableStateOf(false)}
     val current=objects[index.coerceAtMost(objects.lastIndex)]
@@ -191,7 +193,7 @@ private data class SpaceObject(val lane:Int,val crystal:Boolean,val icon:String)
     }
 }
 
-@Composable private fun CatchGame(done:()->Unit){
+@Composable private fun LegacyCatchGame(done:()->Unit){
     val stream=remember{List(18){i->if(i%5==4)"💣" else listOf("🍎","🍓","🍐","🍊")[i%4]}};var index by remember{mutableIntStateOf(0)};var caught by remember{mutableIntStateOf(0)};var mistakes by remember{mutableIntStateOf(0)};val item=stream[index.coerceAtMost(stream.lastIndex)]
     FinnyCard(Modifier.fillMaxWidth()){
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("Фрукты: $caught / 8",fontSize=20.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text("Ошибки: $mistakes / 3",fontWeight=FontWeight.Bold,color=Color(0xFFE05667))}
@@ -201,7 +203,7 @@ private data class SpaceObject(val lane:Int,val crystal:Boolean,val icon:String)
     }
 }
 
-@Composable private fun JumperGame(done:()->Unit){
+@Composable private fun LegacyJumperGame(done:()->Unit){
     var height by remember{mutableIntStateOf(0)};var energy by remember{mutableIntStateOf(3)};val safe=(height*2+1)%3
     FinnyCard(Modifier.fillMaxWidth()){
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("Высота: $height / 10",fontSize=20.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text("⚡ $energy",fontWeight=FontWeight.Black,color=Color(0xFF129A8F))}

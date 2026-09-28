@@ -1,6 +1,7 @@
 # Gradle and Android Studio
 .gradle/
 .gradle-user/
+.kotlin/
 .idea/
 **/build/
 local.properties
@@ -10,6 +11,7 @@ local.properties
 .tooling/
 .jdk17/
 .tmp/
+tmp/
 *.hprof
 *.log
 

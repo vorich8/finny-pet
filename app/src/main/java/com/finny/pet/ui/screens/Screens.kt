@@ -108,21 +108,20 @@ import kotlinx.coroutines.delay
 }
 
 @Composable private fun FinnyBottomBar(labels:List<String>,icons:List<Int>,selected:Int,onSelect:(Int)->Unit){
-    // У исходных PNG одинаковый холст, но сами рисунки занимают разную его долю.
-    // Индивидуальный размер выравнивает их именно визуально, а не только по файлу.
-    val iconSizes=listOf(43.dp,54.dp,43.dp,52.dp)
-    // Сплошная основа без внешних скруглений: по краям экрана больше нет
-    // светлых просветов, а системная навигация визуально продолжает панель.
+    val iconSizes=listOf(36.dp,43.dp,36.dp,42.dp)
     Surface(color=Color(0xFF233F7D),shadowElevation=14.dp){
-        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(88.dp),horizontalArrangement=Arrangement.SpaceEvenly){labels.indices.forEach{i->
-            val scale by animateFloatAsState(if(selected==i)1.12f else .94f,spring(),label="navScale")
-            Column(Modifier.weight(1f).fillMaxHeight().clickable{onSelect(i)}.padding(vertical=5.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
-                Surface(shape=CircleShape,color=if(selected==i)Color(0x33FFFFFF) else Color.Transparent,modifier=Modifier.size(54.dp).graphicsLayer{scaleX=scale;scaleY=scale}){
-                    Box(contentAlignment=Alignment.Center){Image(painterResource(icons[i]),labels[i],Modifier.size(iconSizes[i]),contentScale=ContentScale.Fit,alpha=if(selected==i)1f else .78f)}
+        Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=8.dp,vertical=6.dp).height(68.dp),horizontalArrangement=Arrangement.spacedBy(3.dp)){
+            labels.indices.forEach{i->
+                val active=selected==i
+                val scale by animateFloatAsState(if(active)1f else .91f,spring(),label="navScale")
+                Surface(Modifier.weight(1f).fillMaxHeight().clickable{onSelect(i)},shape=RoundedCornerShape(29.dp),color=if(active)Color(0xFFF8FBFF) else Color.Transparent){
+                    Column(Modifier.fillMaxSize(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
+                        Image(painterResource(icons[i]),labels[i],Modifier.size(iconSizes[i]).graphicsLayer{scaleX=scale;scaleY=scale},contentScale=ContentScale.Fit,alpha=if(active)1f else .92f)
+                        Text(labels[i],fontSize=12.sp,color=if(active)Color(0xFF19345F) else Color.White,fontWeight=if(active)FontWeight.ExtraBold else FontWeight.SemiBold,maxLines=1)
+                    }
                 }
-                Text(labels[i],fontSize=12.sp,color=if(selected==i)Color.White else Color(0xFFD8E3FF),fontWeight=if(selected==i)FontWeight.ExtraBold else FontWeight.Medium,maxLines=1)
             }
-        }}
+        }
     }
 }
 
@@ -206,7 +205,7 @@ import kotlinx.coroutines.delay
 
 private data class CatalogGood(val icon:String,val title:String,val price:Int,val tag:String)
 @Composable private fun ShopHub(coins:Int,open:()->Unit){
-    val goods=listOf(CatalogGood("🥣","Корм для питомца",30,"Нужно"),CatalogGood("💧","Свежая вода",15,"Нужно"),CatalogGood("💊","Лекарство",20,"Нужно"),CatalogGood("🏠","Аренда домика",30,"Нужно"),CatalogGood("🧸","Мягкая игрушка",20,"Желание"),CatalogGood("⚽","Мяч",25,"Желание"),CatalogGood("🍦","Мороженое",10,"Желание"),CatalogGood("📕","Книжка",20,"Желание"),CatalogGood("🧶","Клубок",15,"Желание"),CatalogGood("🎀","Бантик",10,"Желание"),CatalogGood("🛏️","Новая лежанка",40,"Желание"),CatalogGood("🧩","Головоломка",25,"Желание"))
+    val goods=listOf(CatalogGood("🥣","Корм для питомца",30,"Нужно"),CatalogGood("💧","Свежая вода",15,"Нужно"),CatalogGood("💊","Лекарство",20,"Нужно"),CatalogGood("🏠","Аренда домика",30,"Нужно"),CatalogGood("🐻","Мягкая игрушка",20,"Желание"),CatalogGood("⚽","Мяч",25,"Желание"),CatalogGood("🍦","Мороженое",10,"Желание"),CatalogGood("📕","Книжка",20,"Желание"),CatalogGood("🐾","Клубок",15,"Желание"),CatalogGood("🎀","Бантик",10,"Желание"),CatalogGood("🛏️","Новая лежанка",40,"Желание"),CatalogGood("★","Головоломка",25,"Желание"))
     LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){SectionTitle("Магазин",Modifier.weight(1f));CoinCounter(coins)}};items(goods){g->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Surface(color=Color(0xFFFFF1D6),shape=RoundedCornerShape(18.dp)){Text(g.icon,Modifier.padding(15.dp),fontSize=34.sp)};Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text(g.title,fontSize=18.sp,fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis);Text("${g.price} монет • ${g.tag}",fontSize=15.sp,color=Color(0xFF667085),maxLines=1,overflow=TextOverflow.Ellipsis)};IconButton(onClick=open){Icon(Icons.Default.AddShoppingCart,null,tint=Color(0xFF456DDB))}}}}}
 }
 
