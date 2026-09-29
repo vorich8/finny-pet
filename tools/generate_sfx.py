@@ -34,6 +34,13 @@ def note(buffer: list[float], start: float, length: float, frequency: float,
         envelope = attack * release * math.exp(-2.25 * progress)
         if timbre == "wood":
             voice = math.sin(phase) + .12 * math.sin(2 * phase) + .025 * math.sin(3 * phase)
+        elif timbre == "chime":
+            # A rounded, airy upper partial.  It stays pleasant on laptop and
+            # emulator speakers without the sharp metallic attack of a bell.
+            voice = math.sin(phase) + .075 * math.sin(2.01 * phase) + .018 * math.sin(3.02 * phase)
+        elif timbre == "bubble":
+            # Soft toy-like tone for taps and pet interactions.
+            voice = math.sin(phase) + .035 * math.sin(1.51 * phase)
         elif timbre == "soft":
             voice = math.sin(phase) + .045 * math.sin(2 * phase)
         else:
@@ -46,7 +53,9 @@ def make(name: str, length: float, events: list[tuple[float, float, float, float
     for start, duration, frequency, volume, timbre, end_frequency in events:
         note(frames, start, duration, frequency, volume, timbre, end_frequency)
     peak = max((abs(sample) for sample in frames), default=1.0)
-    gain = .68 / peak if peak > 0 else 1.0
+    # Leave comfortable headroom: these effects are layered over speech and
+    # background audio, so they should never dominate the scene.
+    gain = .34 / peak if peak > 0 else 1.0
     pcm = bytearray()
     for sample in frames:
         # Linear normalization leaves generous headroom and avoids limiter distortion.
@@ -61,15 +70,15 @@ def make(name: str, length: float, events: list[tuple[float, float, float, float
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    make("tap", .13, [(0, .115, 310.0, .30, "wood", 245.0)])
-    make("navigate", .22, [(0, .18, 420.0, .25, "soft", 545.0)])
-    make("place", .27, [(0, .15, 285.0, .30, "wood", 235.0), (.09, .16, 455.0, .19, "soft", 505.0)])
-    make("coin", .40, [(0, .25, 720.0, .27, "bell", 810.0), (.10, .27, 1080.0, .24, "bell", 1210.0)])
-    make("warning", .46, [(0, .25, 350.0, .22, "soft", 325.0), (.18, .24, 305.0, .18, "soft", 285.0)])
-    make("pet", .50, [(0, .22, 500.0, .20, "soft", 590.0), (.17, .27, 650.0, .22, "soft", 735.0)])
-    make("success", .74, [(0, .30, 523.25, .24, "bell", None), (.16, .32, 659.25, .24, "bell", None), (.34, .35, 783.99, .26, "bell", None)])
-    make("level_up", .96, [(0, .27, 392.0, .21, "bell", None), (.15, .29, 523.25, .22, "bell", None),
-                            (.32, .31, 659.25, .23, "bell", None), (.51, .40, 880.0, .25, "bell", 990.0)])
+    make("tap", .11, [(0, .085, 235.0, .14, "bubble", 205.0)])
+    make("navigate", .20, [(0, .16, 294.0, .12, "soft", 350.0), (.06, .13, 392.0, .07, "chime", 420.0)])
+    make("place", .25, [(0, .13, 220.0, .13, "wood", 205.0), (.09, .14, 330.0, .08, "chime", 360.0)])
+    make("coin", .32, [(0, .19, 523.0, .12, "chime", 587.0), (.10, .18, 698.0, .08, "chime", 784.0)])
+    make("warning", .40, [(0, .22, 262.0, .09, "soft", 248.0), (.17, .18, 220.0, .07, "soft", 208.0)])
+    make("pet", .42, [(0, .21, 392.0, .10, "bubble", 440.0), (.16, .22, 494.0, .08, "bubble", 523.0)])
+    make("success", .60, [(0, .22, 392.0, .10, "soft", None), (.15, .23, 494.0, .09, "chime", None), (.30, .25, 587.0, .10, "chime", None)])
+    make("level_up", .78, [(0, .22, 330.0, .08, "soft", None), (.15, .23, 392.0, .08, "soft", None),
+                            (.30, .24, 494.0, .09, "chime", None), (.46, .27, 659.0, .09, "chime", 698.0)])
 
 
 if __name__ == "__main__":

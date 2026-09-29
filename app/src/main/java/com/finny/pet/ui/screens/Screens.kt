@@ -53,7 +53,7 @@ import kotlinx.coroutines.delay
             Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(28.dp),color=Color.White.copy(.96f),shadowElevation=12.dp,border=BorderStroke(1.dp,Color(0xFFD9E4F4))){
                 Column(Modifier.padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(7.dp)){
                     Text("Привет!",fontSize=30.sp,fontWeight=FontWeight.Black,color=Color(0xFF25365C))
-                    Text("Выбери нового друга и вместе учитесь обращаться с монетами.",fontSize=17.sp,lineHeight=23.sp,color=Color(0xFF42506C),textAlign=androidx.compose.ui.text.style.TextAlign.Center)
+                    Text("Выбери нового друга и вместе учитесь обращаться с рублями.",fontSize=17.sp,lineHeight=23.sp,color=Color(0xFF42506C),textAlign=androidx.compose.ui.text.style.TextAlign.Center)
                     Spacer(Modifier.height(5.dp))
                     FinnyButton("Выбрать друга",onNext,modifier=Modifier.fillMaxWidth())
                 }
@@ -67,7 +67,7 @@ import kotlinx.coroutines.delay
     val cards=listOf(
         Triple("🍲","Сначала — важное","Сначала оставь деньги на еду, воду, здоровье и другие обязательные расходы."),
         Triple("🎈","Потом — желания","Игрушки и развлечения можно выбрать, если после важного остались деньги."),
-        Triple("⭐","И ещё — мечта","Откладывай небольшую часть монет регулярно. Так большая цель становится ближе.")
+        Triple("⭐","И ещё — мечта","Откладывай небольшую часть ₽ регулярно. Так большая цель становится ближе.")
     )
     var page by rememberSaveable{mutableIntStateOf(0)}
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFFDDEEFF),Color(0xFFFFF2D6))))){
@@ -81,10 +81,10 @@ import kotlinx.coroutines.delay
 
 @Composable fun CreatePetScreen(onDone:()->Unit,vm:CreatePetViewModel=hiltViewModel()){
     val pets=listOf(
-        Triple("fox","Лисёнок","Любознательный и смелый"), Triple("rabbit","Зайка","Добрый и внимательный"), Triple("squirrel","Белка","Весёлая и запасливая"),
+        Triple("rabbit","Зайка","Добрый и внимательный"), Triple("squirrel","Белка","Весёлая и запасливая"),
         Triple("hamster","Хомяк","Уютный друг"), Triple("axolotl","Аксолотль","Необычный исследователь"), Triple("dragon","Дракончик","Маленький мечтатель")
     )
-    var name by remember{mutableStateOf("Финни")};var species by remember{mutableStateOf("fox")}
+    var name by remember{mutableStateOf("Лучик")};var species by remember{mutableStateOf("rabbit")}
     Box(Modifier.fillMaxSize()){
         Image(painterResource(R.drawable.room_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xBBE8F5FF),Color(0xEEFFF8EA)))))
@@ -112,7 +112,7 @@ import kotlinx.coroutines.delay
     val icons=listOf(R.drawable.nav_home,R.drawable.nav_map,R.drawable.nav_knowledge,R.drawable.nav_goals)
     Scaffold(containerColor=Color(0xFFF6F2EB),bottomBar={FinnyBottomBar(labels,icons,tab){tab=it}}){pad->
         Box(Modifier.padding(pad).fillMaxSize()){
-            when(tab){
+            if(!home.ready){Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){CircularProgressIndicator(color=Color(0xFF456DDB))}} else when(tab){
                 0->HomeDashboard(home.petName,home.coins,home.stars,home.variantId,home.equippedSkin,home.hunger,home.water,home.joy,home.health,home.level,home.petStage,home.period,story,home.suggestedTask,home.suggestedLevel,settings.sound,onSoundToggle={settingsVm.sound(!settings.sound)},onTask={nav.navigate(Routes.educationalGame(home.suggestedGameId,home.suggestedLevel))},onAllTasks={nav.navigate(Routes.building("work"))},onFinishDay={storyVm.check{nav.navigate(Routes.DaySummary)}},onPet={nav.navigate(Routes.Pet)})
                 1->CityMapScreen(home.level,home.period,home.coins){nav.navigate(Routes.building(it))}
                 2->MoreHub(onAdult={nav.navigate(Routes.Adult)})
@@ -153,7 +153,7 @@ import kotlinx.coroutines.delay
     }
     var phraseIndex by rememberSaveable{mutableIntStateOf(0)}
     LaunchedEffect(phrases,phraseIndex){delay(5_500);phraseIndex=(phraseIndex+1)%phrases.size}
-    Box(Modifier.fillMaxSize()){
+    BoxWithConstraints(Modifier.fillMaxSize()){
         Image(painterResource(R.drawable.room_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x26152C54),Color.Transparent,Color(0xA91C315B)))))
         Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal=16.dp,vertical=10.dp),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){
@@ -161,7 +161,28 @@ import kotlinx.coroutines.delay
             IconButton(onClick=onSoundToggle,modifier=Modifier.size(48.dp).background(Color(0xF02A477D),CircleShape)){Icon(if(soundOn)Icons.Default.VolumeUp else Icons.Default.VolumeOff,if(soundOn)"Выключить звук" else "Включить звук",tint=Color.White)}
             CoinCounter(coins)
         }
-        PetView(name=name,emotion=if(health<100)"SICK" else if(hunger<25||water<25||joy<30)"SAD" else "JOY",variantId=variantId,stage=petStage,skinId=equippedSkin,showLabels=false,sizeOverride=292.dp,modifier=Modifier.align(Alignment.Center).offset(y=(-59).dp).clickable{FinnyAudio.play(FinnySfx.PET);onPet()})
+        // Keep the pet inside a dedicated middle zone.  The old centered offset
+        // used the full window, so on narrow/tall BlueStacks profiles the pet
+        // could collide with the header or the bottom controls.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(top = 74.dp, bottom = 214.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            val middleHeight = (maxHeight - 288.dp).coerceAtLeast(120.dp)
+            val safePetSize = minOf(maxWidth * .72f, middleHeight * .86f, 244.dp)
+            PetView(
+                name = name,
+                emotion = if (health < 100) "SICK" else if (hunger < 25 || water < 25 || joy < 30) "SAD" else "JOY",
+                variantId = variantId,
+                stage = petStage,
+                skinId = equippedSkin,
+                showLabels = false,
+                sizeOverride = safePetSize,
+                modifier = Modifier.clickable { FinnyAudio.play(FinnySfx.PET); onPet() }
+            )
+        }
         Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(start=14.dp,end=14.dp,bottom=8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
             Surface(Modifier.align(Alignment.CenterHorizontally).widthIn(max=330.dp),shape=RoundedCornerShape(20.dp),color=Color.White,shadowElevation=6.dp,border=BorderStroke(1.dp,if(health<100)Color(0xFFF17775) else Color(0xFFB5C6E8))){Row(Modifier.padding(horizontal=14.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){Text(if(health<100)"❤" else "🐾",fontSize=17.sp);Spacer(Modifier.width(7.dp));Text(phrases[phraseIndex%phrases.size],fontWeight=FontWeight.Bold,fontSize=14.sp,lineHeight=18.sp,color=Color(0xFF263A65),maxLines=2)}}
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){NeedChip("🍲","Еда",hunger/100f,Color(0xFF63C86A),Modifier.weight(1f));NeedChip("💧","Вода",water/100f,Color(0xFF45A9ED),Modifier.weight(1f));NeedChip(if(health<100)"🤒" else "😊",if(health<100)"Здоровье" else "Радость",(if(health<100)health else joy)/100f,if(health<100)Color(0xFFF17775) else Color(0xFFFFC446),Modifier.weight(1f))}
@@ -175,9 +196,9 @@ import kotlinx.coroutines.delay
         Column(Modifier.fillMaxWidth().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(start=20.dp,end=20.dp,bottom=24.dp),verticalArrangement=Arrangement.spacedBy(13.dp)){
             Row(verticalAlignment=Alignment.CenterVertically){Text("План дня ${period.coerceIn(1,5)} из 5",Modifier.weight(1f),fontSize=24.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text("${story.earned} / ${story.target}",fontWeight=FontWeight.Black,color=Color(0xFF4169D8))}
             FinnyProgressTrack(story.earned.toFloat()/story.target.coerceAtLeast(1),Modifier.fillMaxWidth(),color=Color(0xFFFFB93F),height=12.dp)
-            PlanRequirement(if(story.earned>=story.target)"Заработать ${story.target} монет в заданиях" else "Заработать ещё ${(story.target-story.earned).coerceAtLeast(0)} монет",story.earned>=story.target)
+            PlanRequirement(if(story.earned>=story.target)"Заработать ${story.target} ₽ в заданиях" else "Заработать ещё ${(story.target-story.earned).coerceAtLeast(0)} ₽",story.earned>=story.target)
             PlanRequirement("Купить полезный корм в «Продуктах»",story.cared)
-            PlanRequirement(when{story.saved>0->"Отложено в Банк: ${story.saved} монет";story.goalCompleted->"Недельная цель уже накоплена";else->"Отложить доступную сумму в Банке"},story.savingDone)
+            PlanRequirement(when{story.saved>0->"Отложено в Банк: ${story.saved} ₽";story.goalCompleted->"Недельная цель уже накоплена";else->"Отложить доступную сумму в Банке"},story.savingDone)
             Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp),color=Color.White,border=BorderStroke(1.dp,Color(0xFFD5DEF0)),shadowElevation=5.dp){Row(Modifier.fillMaxWidth().clickable{showPlan=false;if(story.ready)onFinishDay() else onTask()}.padding(16.dp),verticalAlignment=Alignment.CenterVertically){Surface(shape=CircleShape,color=if(story.ready)Color(0xFF43A875) else Color(0xFFFFB84D)){Icon(if(story.ready)Icons.Default.CheckCircle else Icons.Default.Work,null,Modifier.padding(11.dp),tint=Color.White)};Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(if(story.ready)"Все пункты выполнены" else suggestedTask,fontSize=18.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text(if(story.ready)"Можно завершить день" else "Уровень $suggestedLevel • награда доступна",color=Color(0xFF52617A))};Icon(Icons.Default.ArrowForward,null,tint=Color(0xFF4169D8))}}
             FinnyButton(if(story.ready)"Открыть итоги" else "Начать задание",{showPlan=false;if(story.ready)onFinishDay() else onTask()},modifier=Modifier.fillMaxWidth())
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={showPlan=false;onAllTasks()},modifier=Modifier.weight(1f).heightIn(min=50.dp),shape=RoundedCornerShape(18.dp)){Text("Все задания",fontWeight=FontWeight.Bold)};OutlinedButton(onClick={showPlan=false;onFinishDay()},modifier=Modifier.weight(1f).heightIn(min=50.dp),shape=RoundedCornerShape(18.dp)){Text("Проверить день",fontWeight=FontWeight.Bold)}}
@@ -196,7 +217,7 @@ import kotlinx.coroutines.delay
             LazyColumn(Modifier.fillMaxSize().padding(pad),contentPadding=PaddingValues(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(14.dp)){
                 item{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){IconButton(onClick=onBack){Icon(Icons.Default.ArrowBack,"Назад")};Text("Итоги дня ${s.day}",fontSize=28.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65))}}
                 item{Box(Modifier.fillMaxWidth().height(205.dp),contentAlignment=Alignment.Center){PetView(emotion=if(s.cared&&s.savingDone)"Радость" else "SAD",showLabels=false,sizeOverride=200.dp)}}
-                item{FinnyCard(Modifier.fillMaxWidth()){Text("Заработано: ${s.earned} монет",fontSize=19.sp,fontWeight=FontWeight.Bold);Text("Потрачено: ${s.spent} монет",fontSize=19.sp,fontWeight=FontWeight.Bold);Text(if(s.goalCompleted&&s.saved==0)"Недельная цель уже накоплена" else "Отложено в Банк: ${s.saved} монет",fontSize=19.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(8.dp));Text(if(s.cared&&s.savingDone)"Спасибо, что позаботился обо мне и о нашей цели!" else "Завтра попробуем лучше спланировать день.",fontSize=16.sp,color=Color(0xFF667085))}}
+                item{FinnyCard(Modifier.fillMaxWidth()){Text("Заработано: ${s.earned} ₽",fontSize=19.sp,fontWeight=FontWeight.Bold);Text("Потрачено: ${s.spent} ₽",fontSize=19.sp,fontWeight=FontWeight.Bold);Text(if(s.goalCompleted&&s.saved==0)"Недельная цель уже накоплена" else "Отложено в Банк: ${s.saved} ₽",fontSize=19.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(8.dp));Text(if(s.cared&&s.savingDone)"Спасибо, что позаботился обо мне и о нашей цели!" else "Завтра попробуем лучше спланировать день.",fontSize=16.sp,color=Color(0xFF667085))}}
             }
         }
     }
@@ -204,7 +225,7 @@ import kotlinx.coroutines.delay
 
 @Composable fun WeekFinalScreen(onHome:()->Unit,vm:StoryViewModel=hiltViewModel(),adultVm:AdultViewModel=hiltViewModel()){
     val s by vm.state.collectAsState();val a by adultVm.state.collectAsState()
-    LazyColumn(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFFFFEDB5),Color(0xFFDCEBFF)))).padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(14.dp)){item{Text("Как ты справился",fontSize=30.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65))};item{Box(Modifier.height(280.dp)){PetView(emotion="Радость",stage=3,showLabels=false)}};item{FinnyCard(Modifier.fillMaxWidth()){Text("Мы сделали это вместе!",fontSize=22.sp,fontWeight=FontWeight.Black);Text("За неделю заработано: ${s.weekEarned} монет");Text("Отложено на цель: ${s.weekSaved} монет");Text("Пройдено заданий: ${a.completed}");Text("Получено звёзд: ${a.stars}")}};item{FinnyButton("Вернуться домой",onHome,modifier=Modifier.fillMaxWidth())}}
+    LazyColumn(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFFFFEDB5),Color(0xFFDCEBFF)))).padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(14.dp)){item{Text("Как ты справился",fontSize=30.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65))};item{Box(Modifier.height(280.dp)){PetView(emotion="Радость",stage=3,showLabels=false)}};item{FinnyCard(Modifier.fillMaxWidth()){Text("Мы сделали это вместе!",fontSize=22.sp,fontWeight=FontWeight.Black);Text("За неделю заработано: ${s.weekEarned} ₽");Text("Отложено на цель: ${s.weekSaved} ₽");Text("Пройдено заданий: ${a.completed}");Text("Получено звёзд: ${a.stars}")}};item{FinnyButton("Вернуться домой",onHome,modifier=Modifier.fillMaxWidth())}}
 }
 
 @Composable private fun NeedChip(icon:String,title:String,progress:Float,color:Color,modifier:Modifier=Modifier){Surface(modifier.height(54.dp),shape=RoundedCornerShape(18.dp),color=Color.White,border=BorderStroke(1.dp,Color(0xFFD5E0F2)),shadowElevation=5.dp){Column(Modifier.fillMaxSize().padding(horizontal=8.dp,vertical=7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)){Text("$icon $title",fontWeight=FontWeight.ExtraBold,fontSize=13.sp,color=Color(0xFF263A65),maxLines=1,softWrap=false,overflow=TextOverflow.Ellipsis);FinnyProgressTrack(progress,Modifier.fillMaxWidth(),color=color,height=8.dp)}}}
@@ -213,18 +234,18 @@ import kotlinx.coroutines.delay
 
 @Composable fun GoalsHub(vm:GoalsViewModel=hiltViewModel()){
     val s by vm.state.collectAsState();s.message?.let{FeedbackDialog("Моя цель",it,vm::clear)}
-    val goals=s.goals.filter{it.id=="winter_traveler"}
+    val goals=s.goals.filter{it.id in setOf("goal_first","goal_home","goal_adventure")}
     LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp),contentPadding=PaddingValues(top=14.dp,bottom=28.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
-        item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp),color=Color.White,shadowElevation=7.dp){Row(Modifier.fillMaxWidth().padding(14.dp),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){SectionTitle("Моя цель недели",Modifier.weight(1f));CoinCounter(s.coins)}}}
+        item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp),color=Color.White,shadowElevation=7.dp){Row(Modifier.fillMaxWidth().padding(14.dp),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){SectionTitle("Три цели",Modifier.weight(1f));CoinCounter(s.coins)}}}
         if(goals.isEmpty())item{FinnyCard(Modifier.fillMaxWidth()){Text("Готовим цель недели…",fontSize=18.sp,fontWeight=FontWeight.Bold,color=Color(0xFF263A65));Text("Она появится через мгновение.",color=Color(0xFF667085))}}
-        items(goals){goal->FinnyCard(Modifier.fillMaxWidth()){Text(if(goal.completed)"✓ ${goal.title}" else "❄ ${goal.title}",fontSize=21.sp,fontWeight=FontWeight.Bold);FinnyProgressBar(goal.saved.toFloat()/goal.cost,"${goal.saved} / ${goal.cost} монет");Text(when{goal.completed->"Цель достигнута! Новый образ открыт.";s.coins<=0->"Свободных монет пока нет. Сначала выполни задание на Работе.";else->"Свободно: ${s.coins} монет. Можно отложить часть суммы, а остальное оставить на заботу."},fontSize=15.sp,color=Color(0xFF667085));if(!goal.completed){Text(if(s.coins>0)"Сколько отложить?" else "Сначала заработай монеты",fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp));Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){listOf(5,10,15,20).forEach{amount->OutlinedButton(onClick={vm.add(goal.id,amount)},enabled=s.coins>=amount,modifier=Modifier.weight(1f),contentPadding=PaddingValues(0.dp)){Text("+$amount")}}}}else Text("Не могу поверить! У меня теперь новый образ — это всё благодаря тебе!",fontWeight=FontWeight.Bold,color=Color(0xFF2F7C58))}}
+        items(goals){goal->val reward=when(goal.id){"goal_first"->"Звёздная шапка";"goal_home"->"Очки планировщика";else->"Корона мечты"};FinnyCard(Modifier.fillMaxWidth()){Text(if(goal.completed)"✓ ${goal.title}" else "★ ${goal.title}",fontSize=21.sp,fontWeight=FontWeight.Bold);Text("Награда: $reward • купить нельзя",fontSize=13.sp,fontWeight=FontWeight.Bold,color=Color(0xFF7655B3));FinnyProgressBar(goal.saved.toFloat()/goal.cost,"${goal.saved} / ${goal.cost} ₽");Text(when{goal.completed->"Цель достигнута! Аксессуар уже в гардеробе.";s.coins<=0->"Свободных рублей пока нет. Сначала выполни задание на Работе.";else->"Свободно: ${s.coins} ₽. Можно отложить часть суммы, а остальное оставить на заботу."},fontSize=15.sp,color=Color(0xFF667085));if(!goal.completed){Text(if(s.coins>0)"Сколько отложить?" else "Сначала заработай рубли",fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp));Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){listOf(5,10,15,20).forEach{amount->OutlinedButton(onClick={vm.add(goal.id,amount)},enabled=s.coins>=amount,modifier=Modifier.weight(1f),contentPadding=PaddingValues(0.dp)){Text("+$amount")}}}}else Text("Эксклюзивный головной аксессуар получен!",fontWeight=FontWeight.Bold,color=Color(0xFF2F7C58))}}
     }
 }
 
 private data class CatalogGood(val icon:String,val title:String,val price:Int,val tag:String)
 @Composable private fun ShopHub(coins:Int,open:()->Unit){
     val goods=listOf(CatalogGood("🥣","Корм для питомца",30,"Нужно"),CatalogGood("💧","Свежая вода",15,"Нужно"),CatalogGood("💊","Лекарство",20,"Нужно"),CatalogGood("🏠","Аренда домика",30,"Нужно"),CatalogGood("🐻","Мягкая игрушка",20,"Желание"),CatalogGood("⚽","Мяч",25,"Желание"),CatalogGood("🍦","Мороженое",10,"Желание"),CatalogGood("📕","Книжка",20,"Желание"),CatalogGood("🐾","Клубок",15,"Желание"),CatalogGood("🎀","Бантик",10,"Желание"),CatalogGood("🛏️","Новая лежанка",40,"Желание"),CatalogGood("★","Головоломка",25,"Желание"))
-    LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){SectionTitle("Магазин",Modifier.weight(1f));CoinCounter(coins)}};items(goods){g->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){if(g.title=="Лекарство")MedicineArtwork("bottle",Modifier.size(64.dp)) else Surface(color=Color(0xFFFFF1D6),shape=RoundedCornerShape(18.dp)){Text(g.icon,Modifier.padding(15.dp),fontSize=34.sp)};Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text(g.title,fontSize=18.sp,fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis);Text("${g.price} монет • ${g.tag}",fontSize=15.sp,color=Color(0xFF667085),maxLines=1,overflow=TextOverflow.Ellipsis)};IconButton(onClick=open){Icon(Icons.Default.AddShoppingCart,null,tint=Color(0xFF456DDB))}}}}}
+    LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){SectionTitle("Магазин",Modifier.weight(1f));CoinCounter(coins)}};items(goods){g->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){if(g.title=="Лекарство")MedicineArtwork("bottle",Modifier.size(64.dp)) else Surface(color=Color(0xFFFFF1D6),shape=RoundedCornerShape(18.dp)){Text(g.icon,Modifier.padding(15.dp),fontSize=34.sp)};Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text(g.title,fontSize=18.sp,fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis);Text("${g.price} ₽ • ${g.tag}",fontSize=15.sp,color=Color(0xFF667085),maxLines=1,overflow=TextOverflow.Ellipsis)};IconButton(onClick=open){Icon(Icons.Default.AddShoppingCart,null,tint=Color(0xFF456DDB))}}}}}
 }
 
 @Composable private fun MoreHub(onAdult:()->Unit,vm:SettingsViewModel=hiltViewModel()){
@@ -259,7 +280,7 @@ private data class CatalogGood(val icon:String,val title:String,val price:Int,va
         LazyColumn(Modifier.fillMaxSize().navigationBarsPadding(),contentPadding=PaddingValues(start=18.dp,top=18.dp,end=18.dp,bottom=28.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(10.dp)){
             item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp),color=Color.White,shadowElevation=7.dp){Row(Modifier.padding(8.dp),verticalAlignment=Alignment.CenterVertically){IconButton(onClick=onBack){Icon(Icons.Default.ArrowBack,"Назад")};Text("Мой питомец",fontSize=25.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65))}}}
             item{Box(Modifier.fillMaxWidth().height(190.dp),contentAlignment=Alignment.Center){PetView(name=s.petName,variantId=s.variantId,stage=s.petStage,skinId=s.equippedSkin,emotion=if(s.health<100)"SICK" else if(s.hunger<25||s.water<25)"SAD" else "JOY",showLabels=false,sizeOverride=190.dp)}}
-            item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(26.dp),color=Color.White,shadowElevation=8.dp,border=BorderStroke(1.dp,Color(0xFFD6DEEE))){Column(Modifier.fillMaxWidth().padding(14.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){Text("Стадия ${s.petStage} из 3 — $stageName",fontSize=19.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65));Text(when{s.health<100->"${s.petName} плохо себя чувствует. Используй лекарство из рюкзака, чтобы восстановить здоровье.";s.hunger<25||s.water<25->"${s.petName} нуждается в заботе. Выбери еду или напиток в магазине продуктов.";else->"${s.petName} растёт вместе с твоими финансовыми навыками."},fontSize=14.sp,lineHeight=18.sp,color=Color(0xFF4F5E77));Row(horizontalArrangement=Arrangement.spacedBy(7.dp)){NeedChip("🍲","Еда",s.hunger/100f,Color(0xFF63C86A),Modifier.weight(1f));NeedChip("💧","Вода",s.water/100f,Color(0xFF45A9ED),Modifier.weight(1f));NeedChip("❤","Здоровье",s.health/100f,Color(0xFFF17775),Modifier.weight(1f))};if(s.health<100||(s.hunger>=25&&s.water>=25)||s.coins>=8)FinnyButton("Открыть рюкзак",onInventory,modifier=Modifier.fillMaxWidth()) else FinnyButton("Заработать монеты на Работе",onQuickGame,modifier=Modifier.fillMaxWidth())}}}
+            item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(26.dp),color=Color.White,shadowElevation=8.dp,border=BorderStroke(1.dp,Color(0xFFD6DEEE))){Column(Modifier.fillMaxWidth().padding(14.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){Text("Стадия ${s.petStage} из 3 — $stageName",fontSize=19.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65));Text(when{s.health<100->"${s.petName} плохо себя чувствует. Используй лекарство из рюкзака, чтобы восстановить здоровье.";s.hunger<25||s.water<25->"${s.petName} нуждается в заботе. Выбери еду или напиток в магазине продуктов.";else->"${s.petName} растёт вместе с твоими финансовыми навыками."},fontSize=14.sp,lineHeight=18.sp,color=Color(0xFF4F5E77));Row(horizontalArrangement=Arrangement.spacedBy(7.dp)){NeedChip("🍲","Еда",s.hunger/100f,Color(0xFF63C86A),Modifier.weight(1f));NeedChip("💧","Вода",s.water/100f,Color(0xFF45A9ED),Modifier.weight(1f));NeedChip("❤","Здоровье",s.health/100f,Color(0xFFF17775),Modifier.weight(1f))};if(s.health<100||(s.hunger>=25&&s.water>=25)||s.coins>=8)FinnyButton("Открыть рюкзак",onInventory,modifier=Modifier.fillMaxWidth()) else FinnyButton("Заработать рубли на Работе",onQuickGame,modifier=Modifier.fillMaxWidth())}}}
         }
     }
 }
@@ -271,10 +292,10 @@ private data class CatalogGood(val icon:String,val title:String,val price:Int,va
     }
     Scaffold(containerColor=Color.Transparent,bottomBar={Surface(color=Color.White,shadowElevation=14.dp){Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=16.dp,vertical=12.dp),horizontalArrangement=Arrangement.spacedBy(9.dp)){if(s.newLevel>0)OutlinedButton(onClick=onHome,modifier=Modifier.weight(.8f).heightIn(min=54.dp),shape=CircleShape){Text("Домой",fontWeight=FontWeight.Bold)};FinnyButton(if(s.newLevel>0)"Играть уровень ${s.newLevel}" else "Вернуться домой",{if(s.newLevel>0)onNext(s.gameId,s.newLevel) else onHome()},modifier=Modifier.weight(1.2f))}}}){pad->
         Column(Modifier.fillMaxSize().padding(pad).background(Brush.verticalGradient(listOf(Color(0xFFFFE9A8),Color(0xFFF0F6FF)))).padding(horizontal=22.dp,vertical=10.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(8.dp)){
-            Box(Modifier.weight(1f).heightIn(max=235.dp)){PetView(name=s.petName,variantId=s.variantId,stage=s.stage,emotion="Радость",showLabels=false)}
+            Box(Modifier.weight(1f).heightIn(max=235.dp),contentAlignment=Alignment.Center){if(s.ready)PetView(name=s.petName,variantId=s.variantId,stage=s.stage,emotion="Радость",showLabels=false) else CircularProgressIndicator()}
             Text(if(stars==3)"Великолепно!" else if(stars==2)"Хорошая работа!" else "Ты справился!",fontSize=28.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));StarsRow(stars)
             if(s.newLevel>0)Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),color=Color(0xFFE7F7EB),border=BorderStroke(1.dp,Color(0xFF86C7A2))){Text("🔓 Открыто новое задание: уровень ${s.newLevel}",Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=10.dp),fontWeight=FontWeight.ExtraBold,color=Color(0xFF28704C),textAlign=androidx.compose.ui.text.style.TextAlign.Center)}
-            Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(26.dp),color=Color.White,shadowElevation=9.dp){Column(Modifier.padding(18.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)){Text(if(s.reward>0)"Награда за первое прохождение" else "Повтор завершён",fontSize=15.sp,color=Color(0xFF667085));Text(if(s.reward>0)"+${s.reward} монет" else "Монеты уже получены",fontSize=27.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text(if(s.reward>0)"Монеты уже в кошельке." else "За повтор монеты не начисляются, но лучший результат сохраняется.",fontSize=14.sp,color=Color(0xFF667085),textAlign=androidx.compose.ui.text.style.TextAlign.Center)}}
+            Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(26.dp),color=Color.White,shadowElevation=9.dp){Column(Modifier.padding(18.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)){Text(if(s.reward>0)"Награда за первое прохождение" else "Повтор завершён",fontSize=15.sp,color=Color(0xFF667085));Text(if(s.reward>0)"+${s.reward} ₽" else "Рубли уже получены",fontSize=27.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text(if(s.reward>0)"Рубли уже в кошельке." else "За повтор рубли не начисляются, но лучший результат сохраняется.",fontSize=14.sp,color=Color(0xFF667085),textAlign=androidx.compose.ui.text.style.TextAlign.Center)}}
         }
     }
 }
@@ -284,5 +305,5 @@ private data class CatalogGood(val icon:String,val title:String,val price:Int,va
     var confirmed by remember{mutableStateOf(false)}; var answer by remember{mutableStateOf("")}; var resetDialog by remember{mutableStateOf(false)}
     if(!confirmed){Column(Modifier.fillMaxSize().padding(24.dp),verticalArrangement=Arrangement.Center){Text("Раздел для взрослых",fontSize=26.sp,fontWeight=FontWeight.Bold);Text("Сколько будет 6 + 3?",fontSize=16.sp);OutlinedTextField(answer,{answer=it.filter(Char::isDigit).take(2)},modifier=Modifier.fillMaxWidth(),singleLine=true);Spacer(Modifier.height(16.dp));FinnyButton("Продолжить",{confirmed=answer=="9"},modifier=Modifier.fillMaxWidth());TextButton(onClick=onBack,modifier=Modifier.fillMaxWidth()){Text("Назад")}};return}
     if(resetDialog) AlertDialog(onDismissRequest={resetDialog=false},title={Text("Сбросить профиль?")},text={Text("Прогресс будет удалён. После сброса откроется начальный выбор питомца.")},dismissButton={TextButton(onClick={resetDialog=false}){Text("Отмена")}},confirmButton={Button(onClick={vm.reset(onReset)}){Text("Сбросить")}})
-    Column(Modifier.fillMaxSize().padding(24.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){Text("Прогресс",fontSize=28.sp,fontWeight=FontWeight.Bold);FinnyCard(Modifier.fillMaxWidth()){Text("Уровень питомца: ${s.level}",fontSize=18.sp);Text("Завершено заданий: ${s.completed}",fontSize=16.sp);Text("Накоплено звёзд: ${s.stars}",fontSize=16.sp);Text("Монет сейчас: ${s.coins}",fontSize=16.sp)};OutlinedButton(onClick={resetDialog=true},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)){Text("Сбросить профиль")};FinnyButton("Назад",onBack,modifier=Modifier.fillMaxWidth())}
+    Column(Modifier.fillMaxSize().padding(24.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){Text("Прогресс",fontSize=28.sp,fontWeight=FontWeight.Bold);FinnyCard(Modifier.fillMaxWidth()){Text("Уровень питомца: ${s.level}",fontSize=18.sp);Text("Завершено заданий: ${s.completed}",fontSize=16.sp);Text("Накоплено звёзд: ${s.stars}",fontSize=16.sp);Text("Рублей сейчас: ${s.coins}",fontSize=16.sp)};OutlinedButton(onClick={resetDialog=true},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)){Text("Сбросить профиль")};FinnyButton("Назад",onBack,modifier=Modifier.fillMaxWidth())}
 }

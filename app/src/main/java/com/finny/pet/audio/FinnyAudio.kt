@@ -10,14 +10,14 @@ import com.finny.pet.ui.screens.VisualPrefs
 
 /** Short, locally bundled effects. Playback never needs a network connection. */
 enum class FinnySfx(val resource: Int, val volume: Float) {
-    TAP(R.raw.sfx_tap, .40f),
-    NAVIGATE(R.raw.sfx_navigate, .44f),
-    PLACE(R.raw.sfx_place, .52f),
-    COIN(R.raw.sfx_coin, .56f),
-    WARNING(R.raw.sfx_warning, .46f),
-    PET(R.raw.sfx_pet, .48f),
-    SUCCESS(R.raw.sfx_success, .60f),
-    LEVEL_UP(R.raw.sfx_level_up, .62f),
+    TAP(R.raw.sfx_tap, .14f),
+    NAVIGATE(R.raw.sfx_navigate, .16f),
+    PLACE(R.raw.sfx_place, .18f),
+    COIN(R.raw.sfx_coin, .19f),
+    WARNING(R.raw.sfx_warning, .15f),
+    PET(R.raw.sfx_pet, .17f),
+    SUCCESS(R.raw.sfx_success, .21f),
+    LEVEL_UP(R.raw.sfx_level_up, .23f),
 }
 
 object FinnyAudio {
@@ -75,7 +75,7 @@ object FinnyAudio {
         val context = appContext ?: return false
         return try {
             val player = MediaPlayer.create(context, effect.resource) ?: return false
-            player.setVolume(1f, 1f)
+            player.setVolume(effect.volume, effect.volume)
             player.setOnCompletionListener { it.release() }
             player.setOnErrorListener { broken, _, _ -> broken.release(); true }
             player.start()
