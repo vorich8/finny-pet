@@ -182,7 +182,9 @@ import kotlinx.coroutines.delay
                 skinId = equippedSkin,
                 showLabels = false,
                 sizeOverride = safePetSize,
-                modifier = Modifier.clickable { FinnyAudio.play(FinnySfx.PET); onPet() }
+                modifier = Modifier
+                    .offset(y = middleHeight * .10f)
+                    .clickable { FinnyAudio.play(FinnySfx.PET); onPet() }
             )
         }
         Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(start=14.dp,end=14.dp,bottom=8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){

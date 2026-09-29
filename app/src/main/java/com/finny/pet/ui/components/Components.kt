@@ -73,10 +73,13 @@ import com.finny.pet.ui.screens.VisualPrefs
     Column(modifier, horizontalAlignment=Alignment.CenterHorizontally) {
         val petSize=sizeOverride?:when(stage.coerceIn(1,6)){1->170.dp;2->184.dp;3->196.dp;4->208.dp;5->220.dp;else->232.dp}
         val animate=VisualPrefs.animationsEnabled.value
+        // The source illustrations have different transparent bottom margins.
+        // Compensate per species so every pet's feet sit on the same baseline.
+        val baselineDrop=when(species){"rabbit","squirrel"->.055f;"hamster"->.075f;"axolotl"->.065f;"dragon"->.075f;else->.06f}
         // Keep the artwork and its accessory in one bounded layer. This avoids
         // transparent-padded accessory sprites spilling into adjacent panels on
         // devices with a different density/aspect ratio (notably BlueStacks).
-        Box(Modifier.size(petSize).clip(RoundedCornerShape(1.dp)).graphicsLayer{scaleX=if(animate)breathe else 1f;scaleY=if(animate)breathe else 1f;translationY=if(animate)floatY else 0f},contentAlignment=Alignment.BottomCenter){
+        Box(Modifier.size(petSize).offset(y=petSize*baselineDrop).clip(RoundedCornerShape(1.dp)).graphicsLayer{scaleX=if(animate)breathe else 1f;scaleY=if(animate)breathe else 1f;translationY=if(animate)floatY else 0f},contentAlignment=Alignment.BottomCenter){
             Image(painterResource(drawable),"Питомец $name, стадия $stage",Modifier.fillMaxSize(),contentScale=ContentScale.Fit)
             skinId?.takeIf{it in headAccessoryIds}?.let{PetSkinOverlay(it,species,petSize)}
         }
