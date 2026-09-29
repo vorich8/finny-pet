@@ -36,6 +36,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import javax.inject.Inject
 
+private fun accessoryTitle(skin: com.finny.pet.data.database.SkinOwnershipEntity): String = when (skin.skinId) {
+    "goal_hat" -> "Звёздная шапка"
+    "goal_glasses" -> "Очки планировщика"
+    "goal_crown" -> "Корона мечты"
+    "hat_saver", "weekly_winter" -> "Тёплая шапка"
+    "glasses_smart" -> "Умные очки"
+    "crown_wise" -> "Корона мудрости"
+    else -> skin.title.takeUnless { it.isBlank() || it.equals("preview", ignoreCase = true) }
+        ?: "текущий головной убор"
+}
+
 data class BootstrapUiState(val loading:Boolean=true,val hasProfile:Boolean=false)
 @HiltViewModel class BootstrapViewModel @Inject constructor(profiles:ProfileRepository):ViewModel(){
     private val _state=MutableStateFlow(BootstrapUiState()); val state:StateFlow<BootstrapUiState> = _state
@@ -88,7 +99,7 @@ data class InventoryUiState(val items:List<InventoryEntity> = emptyList(),val sk
         if(skin.equipped) skinRepository.unequipAll()
         else {
             val current=skinRepository.getEquipped()
-            if(current!=null && current.skinId!=skin.skinId) message.value="Сначала сними «${current.title}»: в слоте головного убора уже есть аксессуар."
+            if(current!=null && current.skinId!=skin.skinId) message.value="Сначала сними «${accessoryTitle(current)}»: в слоте головного убора уже есть аксессуар."
             else skinRepository.equip(skin)
         }
     }
@@ -108,7 +119,7 @@ data class SkinShopUiState(val owned:List<com.finny.pet.data.database.SkinOwners
     private val feedback=MutableStateFlow<Pair<String?,SkinGood?>>(null to null)
     val state=combine(skins.observeAll(),feedback){owned,f->SkinShopUiState(owned,f.first,f.second)}.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),SkinShopUiState())
     fun buy(g:SkinGood,confirmed:Boolean=false)=viewModelScope.launch{when(buySkin(g.id,g.title,g.price,confirmed)){SpendResult.SUCCESS->feedback.value="Скин добавлен в гардероб!" to null;SpendResult.NOT_ENOUGH->feedback.value="Рублей пока не хватает. Выполни задание и возвращайся." to null;SpendResult.NEED_CONFIRMATION->feedback.value=null to g}}
-    fun equip(g:SkinGood)=viewModelScope.launch{skinRepository.get(g.id)?.let{skin->if(skin.equipped)skinRepository.unequipAll() else {val current=skinRepository.getEquipped();if(current!=null&&current.skinId!=skin.skinId)feedback.value="Сначала сними «${current.title}»: в слоте головного убора уже есть аксессуар." to null else skinRepository.equip(skin)}}}
+    fun equip(g:SkinGood)=viewModelScope.launch{skinRepository.get(g.id)?.let{skin->if(skin.equipped)skinRepository.unequipAll() else {val current=skinRepository.getEquipped();if(current!=null&&current.skinId!=skin.skinId)feedback.value="Сначала сними «${accessoryTitle(current)}»: в слоте головного убора уже есть аксессуар." to null else skinRepository.equip(skin)}}}
     fun clear(){feedback.value=null to null}
 }
 

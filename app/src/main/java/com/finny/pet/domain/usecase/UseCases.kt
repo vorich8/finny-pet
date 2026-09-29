@@ -39,6 +39,7 @@ class EnableDeveloperMode @Inject constructor(
     private val skins: SkinRepository
 ) {
     suspend operator fun invoke() {
+        skins.clear()
         profiles.save(ProfileEntity(petName = "Демо", currentPeriod = 5))
         pets.save(PetEntity(variantId = "rabbit_1", stage = 3))
         balances.save(BalanceEntity(coins = 999, stars = 99))
