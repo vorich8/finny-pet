@@ -51,7 +51,7 @@ private fun workGameIcon(id:String):ImageVector=when(id){
     val pins=listOf(
         BuildingPin("home",Icons.Default.Home,"Дом","Здесь живёт Финни",.20f,.22f,1),
         BuildingPin("bank",Icons.Default.AccountBalance,"Банк","Копи и планируй",.57f,.20f,1),
-        BuildingPin("work",Icons.Default.Work,"Работа","Зарабатывай монеты",.76f,.36f,1),
+        BuildingPin("work",Icons.Default.Work,"Работа","Зарабатывай рубли",.76f,.36f,1),
         BuildingPin("food",Icons.Default.ShoppingBasket,"Продукты","Еда и забота",.16f,.48f,1),
         BuildingPin("arcade",Icons.Default.SportsEsports,"Игровой центр","Задания на счёт",.70f,.60f,2),
         BuildingPin("mall",Icons.Default.Store,"ТРЦ","Покупай по плану",.28f,.73f,1)
@@ -85,8 +85,8 @@ private fun workGameIcon(id:String):ImageVector=when(id){
         if(travelling!=null)Box(Modifier.fillMaxSize().background(Color(0xCFF4F8FF)),contentAlignment=Alignment.Center){
             Surface(Modifier.padding(28.dp).fillMaxWidth(),shape=RoundedCornerShape(30.dp),color=Color.White,shadowElevation=18.dp){Column(Modifier.padding(22.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(10.dp)){
                 Text("В путь!",fontSize=27.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65))
-                Box(Modifier.fillMaxWidth().height(116.dp),contentAlignment=Alignment.Center){PetView(emotion="Радость",showLabels=false,sizeOverride=105.dp,modifier=Modifier.graphicsLayer{translationX=runner.value})}
-                Text("Финни бежит в «${travelling?.title}»",fontSize=16.sp,fontWeight=FontWeight.Bold,color=Color(0xFF4F5E77))
+                Box(Modifier.fillMaxWidth().height(116.dp),contentAlignment=Alignment.Center){Surface(Modifier.graphicsLayer{translationX=runner.value}.size(76.dp),shape=CircleShape,color=Color(0xFFE8F0FF),border=BorderStroke(3.dp,Color.White),shadowElevation=8.dp){Box(contentAlignment=Alignment.Center){Icon(Icons.Default.DirectionsRun,null,Modifier.size(42.dp),tint=Color(0xFF456DDB))}}}
+                Text("Питомец бежит в «${travelling?.title}»",fontSize=16.sp,fontWeight=FontWeight.Bold,color=Color(0xFF4F5E77))
                 LinearProgressIndicator(Modifier.fillMaxWidth(),color=Color(0xFF4B72DE),trackColor=Color(0xFFE3EAF8))
             }}
         }
@@ -100,9 +100,9 @@ private fun workGameIcon(id:String):ImageVector=when(id){
     var section by rememberSaveable(id){mutableIntStateOf(0)}
     val info=when(id){"home"->Triple("Дом Финни",Icons.Default.Home,Color(0xFF70B9F3));"food"->Triple("Магазин продуктов",Icons.Default.ShoppingBasket,Color(0xFFFFA84D));"work"->Triple("Работа",Icons.Default.Work,Color(0xFF6F91E8));"arcade"->Triple("Игровой центр",Icons.Default.SportsEsports,Color(0xFF9A70DC));"mall"->Triple("Торговый центр",Icons.Default.Store,Color(0xFFFF7C9F));else->Triple("Банк",Icons.Default.AccountBalance,Color(0xFF5BC49B))}
     val background=when(id){"home"->R.drawable.room_background;"food"->R.drawable.interior_food;"work"->R.drawable.interior_work;"arcade"->R.drawable.interior_arcade;"mall"->R.drawable.interior_mall;else->R.drawable.interior_bank}
-    state.message?.let{FeedbackDialog(if(it.contains("не хватает",true))"Монет пока не хватает" else "Покупка готова",it,vm::clear,if(it.contains("не хватает",true))FinnySfx.WARNING else FinnySfx.COIN)}
-    skinState.message?.let{FeedbackDialog(if(it.contains("не хватает",true))"Монет пока не хватает" else "Гардероб",it,skinVm::clear,if(it.contains("не хватает",true))FinnySfx.WARNING else FinnySfx.COIN)}
-    state.pending?.let{g->AlertDialog(onDismissRequest=vm::clear,title={Text("Оставить на важное?")},text={Text("После покупки останется меньше 20 монет. Можно сохранить их на еду, воду или цель.")},dismissButton={TextButton(onClick=vm::clear){Text("Оставить на важное")}},confirmButton={Button(onClick={vm.buy(g,true)}){Text("Всё равно купить")}})}
+    state.message?.let{FeedbackDialog(if(it.contains("не хватает",true))"Рублей пока не хватает" else "Покупка готова",it,vm::clear,if(it.contains("не хватает",true))FinnySfx.WARNING else FinnySfx.COIN)}
+    skinState.message?.let{FeedbackDialog(if(it.contains("не хватает",true))"Рублей пока не хватает" else "Гардероб",it,skinVm::clear,if(it.contains("не хватает",true))FinnySfx.WARNING else FinnySfx.COIN)}
+    state.pending?.let{g->AlertDialog(onDismissRequest=vm::clear,title={Text("Оставить на важное?")},text={Text("После покупки останется меньше 20 ₽. Можно сохранить их на еду, воду или цель.")},dismissButton={TextButton(onClick=vm::clear){Text("Оставить на важное")}},confirmButton={Button(onClick={vm.buy(g,true)}){Text("Всё равно купить")}})}
     skinState.pending?.let{g->AlertDialog(onDismissRequest=skinVm::clear,title={Text("Оставить на важное?")},text={Text("Похоже, после покупки останется мало денег. Оставим немного на еду, воду и лекарства?")},dismissButton={TextButton(onClick=skinVm::clear){Text("Оставить на важное")}},confirmButton={Button(onClick={skinVm.buy(g,true)}){Text("Всё равно купить")}})}
     Box(Modifier.fillMaxSize()){
         Image(painterResource(background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
@@ -172,7 +172,7 @@ private fun WorkGamesPanel(navigate:(String)->Unit,vm:WorkProgressViewModel=hilt
             Surface(color=Color(0xEE203F73),shape=RoundedCornerShape(24.dp),shadowElevation=9.dp) {
                 Column(Modifier.padding(16.dp)) {
                     Text("Финансовая академия",color=Color.White,fontSize=22.sp,fontWeight=FontWeight.Black)
-                    Text("Выбери задание и уровень. За первое прохождение — монеты и звёзды; повтор помогает улучшить результат.",color=Color(0xFFDDE8FF),fontSize=14.sp)
+                    Text("Выбери задание и уровень. За первое прохождение — рубли и звёзды; повтор помогает улучшить результат.",color=Color(0xFFDDE8FF),fontSize=14.sp)
                 }
             }
         }
@@ -209,8 +209,10 @@ private fun foodGoods(day:Int)=listOf(
     CityGood("water_tea","🍵","Ягодный чай","WATER",12),
     CityGood("medicine","💊","Лекарство","MEDICINE",20)
 )
-private val wantGoods=listOf(CityGood("ball","⚽","Весёлый мяч","WANT",28),CityGood("book","📘","Книга","WANT",22),CityGood("puzzle","★","Головоломка","WANT",35),CityGood("bow","🎀","Праздничный бант","WANT",18),CityGood("bed","🛏","Мягкая лежанка","WANT",55),CityGood("ice","🍦","Мороженое","WANT",14),CityGood("candy","🍬","Конфета","WANT",8),CityGood("pizza","🍕","Пицца","WANT",24))
-private val skinGoods=listOf(SkinGood("scarf_sun","Солнечный шарф",30,3),SkinGood("hoodie_color","Цветная кофта",50,3),SkinGood("hat_saver","Шапка-копилка",45,3),SkinGood("glasses_smart","Умные очки",60,4),SkinGood("cape_goal","Плащ цели",80,5),SkinGood("crown_wise","Корона мудреца",110,6))
+// The room currently renders one toy, the ball. Do not sell decorative
+// placeholders that disappear after purchase.
+private val wantGoods=listOf(CityGood("ball","⚽","Весёлый мяч","WANT",28))
+private val skinGoods=listOf(SkinGood("goal_hat","Звёздная шапка",rewardOnly=true),SkinGood("goal_glasses","Очки планировщика",rewardOnly=true),SkinGood("goal_crown","Корона мечты",rewardOnly=true))
 
 private fun goodEffect(g:CityGood)=when(g.id){
     "food_fish"->"Еда +35";"food_bowl"->"Еда +30";"food_carrot"->"Еда +20";"food_apple"->"Еда +18";"food_berry"->"Еда +15"
@@ -239,14 +241,14 @@ private fun itemIcon(id:String,category:String):ImageVector=when(id){
 
 @Composable private fun StoreInterior(goods:List<CityGood>,buy:(CityGood)->Unit){
     LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp),verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(bottom=24.dp)){
-        item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Color.White,shadowElevation=5.dp){Text("Выбери товар. Если монет не хватит, игра объяснит, как заработать ещё.",Modifier.padding(14.dp),fontSize=15.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF3D4E6C))}}
-        items(goods){g->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){GoodIllustration(g.id,g.category,Modifier.size(58.dp));Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(g.title,fontWeight=FontWeight.Bold,fontSize=18.sp,maxLines=2,overflow=TextOverflow.Ellipsis);Text(goodEffect(g),fontSize=12.sp,fontWeight=FontWeight.Bold,color=when(g.category){"FOOD"->Color(0xFF9A6500);"WATER"->Color(0xFF287DB2);"MEDICINE"->Color(0xFFB94D5D);else->Color(0xFF7552A7)});Text("${g.price} монет",color=Color(0xFF667085),maxLines=1)};Spacer(Modifier.width(6.dp));Button(onClick={buy(g)},shape=CircleShape,contentPadding=PaddingValues(horizontal=14.dp,vertical=9.dp)){Text("Купить",fontSize=13.sp,fontWeight=FontWeight.Bold)}}}}
+        item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Color.White,shadowElevation=5.dp){Text("Выбери товар. Если рублей не хватит, игра объяснит, как заработать ещё.",Modifier.padding(14.dp),fontSize=15.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF3D4E6C))}}
+        items(goods){g->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){GoodIllustration(g.id,g.category,Modifier.size(58.dp));Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(g.title,fontWeight=FontWeight.Bold,fontSize=18.sp,maxLines=2,overflow=TextOverflow.Ellipsis);Text(goodEffect(g),fontSize=12.sp,fontWeight=FontWeight.Bold,color=when(g.category){"FOOD"->Color(0xFF9A6500);"WATER"->Color(0xFF287DB2);"MEDICINE"->Color(0xFFB94D5D);else->Color(0xFF7552A7)});Text("${g.price} ₽",color=Color(0xFF667085),maxLines=1)};Spacer(Modifier.width(6.dp));Button(onClick={buy(g)},shape=CircleShape,contentPadding=PaddingValues(horizontal=14.dp,vertical=9.dp)){Text("Купить",fontSize=13.sp,fontWeight=FontWeight.Bold)}}}}
     }
 }
 @Composable private fun SkinStore(level:Int,owned:List<com.finny.pet.data.database.SkinOwnershipEntity>,buy:(SkinGood)->Unit,equip:(SkinGood)->Unit){
     LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp),verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(bottom=24.dp)){
-        item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Color.White,shadowElevation=5.dp){Text("Аксессуары подходят каждому питомцу и меняют только его образ. Игровых преимуществ они не дают.",Modifier.padding(14.dp),fontSize=15.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF3D4E6C))}}
-        items(skinGoods){g->val item=owned.firstOrNull{it.skinId==g.id};val unlocked=level>=g.level;FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(68.dp),color=if(unlocked)Color(0xFFEAF1FF) else Color(0xFFF0F2F6),shape=RoundedCornerShape(20.dp)){Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){if(unlocked)SkinArtwork(g.id,Modifier.fillMaxSize().padding(5.dp)) else Icon(Icons.Default.Lock,null,Modifier.size(28.dp),tint=Color(0xFF8A94A7))}};Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(g.title,fontWeight=FontWeight.Bold,fontSize=18.sp,maxLines=2,overflow=TextOverflow.Ellipsis);Text(if(!unlocked)"Откроется на уровне ${g.level}" else if(item?.owned==true)"Уже в гардеробе" else "${g.price} монет",fontSize=14.sp,color=Color(0xFF596A84),maxLines=2)};Spacer(Modifier.width(6.dp));Button(onClick={if(item?.owned==true)equip(g) else buy(g)},enabled=unlocked,shape=CircleShape,contentPadding=PaddingValues(horizontal=12.dp,vertical=10.dp)){Text(if(item?.equipped==true)"Снять" else if(item?.owned==true)"Надеть" else "Купить",fontSize=13.sp,fontWeight=FontWeight.Bold)}}}}
+        item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Color.White,shadowElevation=5.dp){Text("Здесь только аксессуары на голову. Их нельзя купить: выполни одну из трёх целей и получи особую награду.",Modifier.padding(14.dp),fontSize=15.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF3D4E6C))}}
+        items(skinGoods){g->val item=owned.firstOrNull{it.skinId==g.id};FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(68.dp),color=if(item?.owned==true)Color(0xFFEAF1FF) else Color(0xFFF0F2F6),shape=RoundedCornerShape(20.dp)){Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){if(item?.owned==true)SkinArtwork(g.id,Modifier.fillMaxSize().padding(5.dp)) else Icon(Icons.Default.Lock,null,Modifier.size(28.dp),tint=Color(0xFF8A94A7))}};Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(g.title,fontWeight=FontWeight.Bold,fontSize=18.sp,maxLines=2,overflow=TextOverflow.Ellipsis);Text(if(item?.owned==true)"Получен за цель" else "Эксклюзивная награда за цель",fontSize=14.sp,color=Color(0xFF596A84),maxLines=2)};Spacer(Modifier.width(6.dp));Button(onClick={equip(g)},enabled=item?.owned==true,shape=CircleShape,contentPadding=PaddingValues(horizontal=12.dp,vertical=10.dp)){Text(if(item?.equipped==true)"Снять" else if(item?.owned==true)"Надеть" else "Закрыто",fontSize=13.sp,fontWeight=FontWeight.Bold)}}}}
     }
 }
 @Composable private fun ActionInterior(subtitle:String,actions:List<Pair<Pair<String,String>,String>>,navigate:(String)->Unit){
@@ -277,8 +279,8 @@ private fun itemIcon(id:String,category:String):ImageVector=when(id){
                         }
                     }
                 }
-                if(s.skins.any{it.owned})item{Text("Гардероб",fontSize=21.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65),modifier=Modifier.padding(top=8.dp))}
-                items(s.skins.filter{it.owned}){skin->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(58.dp),shape=RoundedCornerShape(17.dp),color=Color(0xFFEAF1FF)){SkinArtwork(skin.skinId,Modifier.fillMaxSize().padding(4.dp))};Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(skin.title,fontWeight=FontWeight.Bold,fontSize=18.sp);Text(if(skin.equipped)"Надето" else "Можно надеть",color=Color(0xFF667085))};Button(onClick={vm.equip(skin)}){Text(if(skin.equipped)"Снять" else "Надеть")}}}}
+                if(s.skins.any{it.owned&&it.skinId in headAccessoryIds})item{Text("Головные аксессуары",fontSize=21.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65),modifier=Modifier.padding(top=8.dp))}
+                items(s.skins.filter{it.owned&&it.skinId in headAccessoryIds}){skin->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(58.dp),shape=RoundedCornerShape(17.dp),color=Color(0xFFEAF1FF)){SkinArtwork(skin.skinId,Modifier.fillMaxSize().padding(4.dp))};Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(skin.title,fontWeight=FontWeight.Bold,fontSize=18.sp);Text(if(skin.equipped)"Надето" else "Можно надеть",color=Color(0xFF667085))};Button(onClick={vm.equip(skin)}){Text(if(skin.equipped)"Снять" else "Надеть")}}}}
             }
         }
     }
