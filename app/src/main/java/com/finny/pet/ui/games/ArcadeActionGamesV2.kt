@@ -61,8 +61,8 @@ fun RocketGame(done:()->Unit) {
         }
     }
     FinnyCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("💎 $crystals / 10",fontSize=22.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text("❤ $lives",fontSize=20.sp,fontWeight=FontWeight.Black,color=Color(0xFFE0546D))}
-        Text("Ракета летит сама. Двигай её вверх и вниз, лови кристаллы и обходи препятствия.",fontSize=15.sp,lineHeight=19.sp,color=Color(0xFF465B7A))
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){GameStatCard("Кристаллы","$crystals / 10",Color(0xFFE8F3FF),Modifier.weight(1f),"◆");GameStatCard("Прочность",lives.toString(),Color(0xFFFFE8EC),Modifier.weight(1f),"❤")}
+        GameInstructionCard("Ракета летит сама. Веди её пальцем вверх и вниз, собирай кристаллы и обходи красные препятствия.",Color(0xFFD64D87),"Управление")
         Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),color=Color(0xFF071532),border=BorderStroke(3.dp,Color(0xFF58C5F5))) {
             BoxWithConstraints(Modifier.fillMaxWidth().height(300.dp).pointerInput(running) {
                 detectDragGestures(onDragStart={p->if(running)lane=(p.y/(size.height/5f)).toInt().coerceIn(0,4)},onDrag={change,_ ->change.consume();if(running)lane=(change.position.y/(size.height/5f)).toInt().coerceIn(0,4)})
@@ -76,7 +76,7 @@ fun RocketGame(done:()->Unit) {
             Button(onClick={lane=(lane-1).coerceAtLeast(0)},modifier=Modifier.weight(1f).heightIn(min=54.dp)){Text("▲ Выше",fontWeight=FontWeight.Bold)}
             Button(onClick={lane=(lane+1).coerceAtMost(4)},modifier=Modifier.weight(1f).heightIn(min=54.dp)){Text("▼ Ниже",fontWeight=FontWeight.Bold)}
         }
-        if(ended) { Text("Три столкновения. Выбери свободную дорожку и попробуй снова.",color=Color(0xFF934353),fontSize=15.sp);FinnyButton("Новый полёт",::reset,modifier=Modifier.fillMaxWidth()) }
+        if(ended) { FinnyCoachCard("Три столкновения. Следи за дорожкой впереди и заранее уходи от препятствия.");FinnyButton("Новый полёт",::reset,modifier=Modifier.fillMaxWidth()) }
     }
 }
 
@@ -114,8 +114,8 @@ fun CatchGame(done:()->Unit) {
         }
     }
     FinnyCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("Фрукты: $caught / 8",fontSize=20.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text("Бомбы: $mistakes / 3",fontSize=16.sp,fontWeight=FontWeight.Bold,color=Color(0xFFBA4B60))}
-        Text("Веди корзинку пальцем по экрану. Лови фрукты, от бомбочек уходи в сторону.",fontSize=15.sp,lineHeight=19.sp,color=Color(0xFF465B7A))
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){GameStatCard("Фрукты","$caught / 8",Color(0xFFE8F7EE),Modifier.weight(1f),"✓");GameStatCard("Ошибки","$mistakes / 3",Color(0xFFFFE8EC),Modifier.weight(1f),"!")}
+        GameInstructionCard("Веди корзинку пальцем влево и вправо. Лови фрукты, а от бомбочек уходи в сторону.",Color(0xFF8056C7),"Управление")
         Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),color=Color(0xFF37245F),border=BorderStroke(3.dp,Color(0xFFBCA3FF))) {
             BoxWithConstraints(Modifier.fillMaxWidth().height(330.dp).background(Brush.verticalGradient(listOf(Color(0xFF32205F),Color(0xFF7866AA)))).pointerInput(running) {
                 detectDragGestures(onDragStart={p->if(running)basketX=(p.x/size.width).coerceIn(.1f,.9f)},onDrag={change,amount->change.consume();if(running)basketX=(basketX+amount.x/size.width).coerceIn(.1f,.9f)})
@@ -128,7 +128,7 @@ fun CatchGame(done:()->Unit) {
             Button(onClick={basketX=(basketX-.16f).coerceAtLeast(.1f)},modifier=Modifier.weight(1f).heightIn(min=54.dp)){Text("◀ Левее",fontWeight=FontWeight.Bold)}
             Button(onClick={basketX=(basketX+.16f).coerceAtMost(.9f)},modifier=Modifier.weight(1f).heightIn(min=54.dp)){Text("Правее ▶",fontWeight=FontWeight.Bold)}
         }
-        if(ended) { Text("Пойманы три бомбочки. В следующий раз двигай корзинку в сторону.",fontSize=15.sp,color=Color(0xFF934353));FinnyButton("Попробовать ещё",::reset,modifier=Modifier.fillMaxWidth()) }
+        if(ended) { FinnyCoachCard("Пойманы три бомбочки. Смотри, где падает опасный предмет, и заранее освобождай это место.");FinnyButton("Попробовать ещё",::reset,modifier=Modifier.fillMaxWidth()) }
     }
 }
 
@@ -162,8 +162,8 @@ fun JumperGame(done:()->Unit) {
         }
     }
     FinnyCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text("Высота: $level / 10",fontSize=20.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text("⚡ $energy",fontSize=19.sp,fontWeight=FontWeight.Bold,color=Color(0xFF269E83))}
-        Text("Финни прыгает сам каждые полторы секунды. Переводи его на зелёную платформу стрелками или коснись платформы.",fontSize=15.sp,lineHeight=19.sp,color=Color(0xFF465B7A))
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){GameStatCard("Высота","$level / 10",Color(0xFFE8F3FF),Modifier.weight(1f),"↑");GameStatCard("Энергия",energy.toString(),Color(0xFFE7F8F1),Modifier.weight(1f),"⚡")}
+        GameInstructionCard("Финни прыгает сам каждые полторы секунды. Успей перевести его на зелёную платформу стрелками или касанием.",Color(0xFF148E87),"Управление")
         Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),color=Color(0xFF0F4960),border=BorderStroke(3.dp,Color(0xFF73DDCA))) {
             Column(Modifier.fillMaxWidth().height(300.dp).padding(12.dp),verticalArrangement=Arrangement.SpaceBetween) {
                 Text("☁️               ⭐              ☁️",fontSize=24.sp,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Center)
@@ -175,6 +175,6 @@ fun JumperGame(done:()->Unit) {
             Button(onClick={lane=(lane-1).coerceAtLeast(0)},modifier=Modifier.weight(1f).heightIn(min=54.dp)){Text("◀ Левее",fontWeight=FontWeight.Bold)}
             Button(onClick={lane=(lane+1).coerceAtMost(2)},modifier=Modifier.weight(1f).heightIn(min=54.dp)){Text("Правее ▶",fontWeight=FontWeight.Bold)}
         }
-        if(ended) { Text("Энергия закончилась. Начни снова и следи за зелёной платформой.",fontSize=15.sp,color=Color(0xFF934353));FinnyButton("Прыгнуть заново",::reset,modifier=Modifier.fillMaxWidth()) }
+        if(ended) { FinnyCoachCard("Энергия закончилась. Сначала найди зелёную платформу, затем переведи Финни на неё.");FinnyButton("Прыгнуть заново",::reset,modifier=Modifier.fillMaxWidth()) }
     }
 }

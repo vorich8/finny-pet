@@ -12,7 +12,7 @@ from reportlab.platypus import (
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parents[1] / "output/pdf/FinnyPet_Documentation_2.2.1.pdf"
+OUT = Path(__file__).resolve().parents[1] / "output/pdf/FinnyPet_Documentation_2.3.0.pdf"
 OUT.parent.mkdir(parents=True, exist_ok=True)
 FONT = r"C:\Windows\Fonts\arial.ttf"
 FONT_BOLD = r"C:\Windows\Fonts\arialbd.ttf"
@@ -84,12 +84,12 @@ def header_footer(canvas, doc):
     canvas.drawRightString(w-18*mm, 10*mm, f"Страница {doc.page}")
     canvas.restoreState()
 
-doc = SimpleDocTemplate(str(OUT), pagesize=A4, rightMargin=18*mm, leftMargin=18*mm, topMargin=20*mm, bottomMargin=17*mm)
+doc = SimpleDocTemplate(str(OUT), pagesize=A4, rightMargin=18*mm, leftMargin=18*mm, topMargin=20*mm, bottomMargin=23*mm)
 story = []
 
 # Cover
 story += [Spacer(1, 45*mm), p("ПИТОМЕЦ ФИННИ", "TitleFinny"), p("Функциональный офлайн-прототип Android-приложения по финансовой грамотности для детей 7-11 лет", "SubtitleFinny"), Spacer(1, 12*mm)]
-cover = Table([[p("Версия", "Callout"), p("2.2.1, versionCode 16", "Callout")], [p("Платформа", "Callout"), p("Android 8.0+; Kotlin; Jetpack Compose", "Callout")], [p("Сборка", "Callout"), p("Локальная Room/SQLite, без сервера и INTERNET permission", "Callout")]], colWidths=[43*mm, 115*mm])
+cover = Table([[p("Версия", "Callout"), p("2.3.0, versionCode 17", "Callout")], [p("Платформа", "Callout"), p("Android 8.0+; Kotlin; Jetpack Compose", "Callout")], [p("Сборка", "Callout"), p("Локальная Room/SQLite, без сервера и INTERNET permission", "Callout")]], colWidths=[43*mm, 115*mm])
 cover.setStyle(TableStyle([("BACKGROUND", (0,0), (-1,-1), colors.white), ("GRID", (0,0), (-1,-1), .6, colors.HexColor("#C9D5EB")), ("ROWBACKGROUNDS", (0,0), (-1,-1), [colors.HexColor("#EDF3FF"), colors.white]), ("VALIGN", (0,0), (-1,-1), "MIDDLE"), ("LEFTPADDING", (0,0), (-1,-1), 9), ("RIGHTPADDING", (0,0), (-1,-1), 9), ("TOPPADDING", (0,0), (-1,-1), 9), ("BOTTOMPADDING", (0,0), (-1,-1), 9)]))
 story += [cover, Spacer(1, 16*mm), p("Исходники и материалы: github.com/vorich8/finny-pet. Документ предназначен для сборки, проверки и демонстрации.", "SubtitleFinny"), PageBreak()]
 

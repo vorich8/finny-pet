@@ -136,11 +136,13 @@ private fun WorkGamesPanel(navigate:(String)->Unit,vm:WorkProgressViewModel=hilt
         val gameProgress=progress.firstOrNull { it.id==game.id } ?: WorkGameProgress(game.id)
         AlertDialog(
             onDismissRequest={selected=null},
-            title={Row(verticalAlignment=Alignment.CenterVertically){Icon(workGameIcon(game.id),null,tint=Color(0xFF456DDB));Spacer(Modifier.width(9.dp));Text(game.title,fontWeight=FontWeight.Black)}},
+            containerColor=Color(0xFFF8FAFF),
+            shape=RoundedCornerShape(30.dp),
+            title={Row(verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(48.dp),shape=RoundedCornerShape(16.dp),color=Color(0xFFE4ECFF)){Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Icon(workGameIcon(game.id),null,Modifier.size(28.dp),tint=Color(0xFF365FC4))}};Spacer(Modifier.width(11.dp));Column{Text(game.title,fontSize=21.sp,fontWeight=FontWeight.Black,color=Color(0xFF20365F));Text("Учебная мини-игра",fontSize=13.sp,fontWeight=FontWeight.Bold,color=Color(0xFF667895))}}},
             text={
                 Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Text(game.instruction,color=Color(0xFF53627A))
-                    Text("Выбери уровень",fontWeight=FontWeight.ExtraBold)
+                    Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Color.White,border=BorderStroke(1.dp,Color(0xFFD9E4F4))){Row(Modifier.padding(13.dp),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(9.dp)){Icon(Icons.Default.Lightbulb,null,Modifier.size(22.dp),tint=Color(0xFFE59621));Text(game.instruction,Modifier.weight(1f),fontSize=15.sp,lineHeight=21.sp,fontWeight=FontWeight.Medium,color=Color(0xFF3F506D))}}
+                    Text("Выбери уровень",fontSize=17.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65))
                     for(row in 0..2) {
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)) {
                             for(column in 1..4) {
@@ -151,17 +153,17 @@ private fun WorkGamesPanel(navigate:(String)->Unit,vm:WorkProgressViewModel=hilt
                                     OutlinedButton(
                                         onClick={selected=null;navigate(Routes.educationalGame(game.id,level))},
                                         enabled=open,
-                                        modifier=Modifier.weight(1f),
+                                        modifier=Modifier.weight(1f).heightIn(min=48.dp),
                                         contentPadding=PaddingValues(0.dp)
-                                    ){Text(if(done)"✓ $level" else if(open)"$level" else "🔒",fontWeight=FontWeight.Bold)}
+                                    ){if(done)Icon(Icons.Default.CheckCircle,null,Modifier.size(17.dp));Text(if(done)" $level" else if(open)"$level" else "—",fontWeight=FontWeight.Bold)}
                                 } else Spacer(Modifier.weight(1f))
                             }
                         }
                     }
-                    Text("✓ Пройденный уровень можно повторить, но монеты второй раз не начисляются.",fontSize=13.sp,color=Color(0xFF667085))
+                    Text("Пройденный уровень можно повторить для тренировки. Повторная награда не начисляется.",fontSize=14.sp,lineHeight=19.sp,color=Color(0xFF596A84))
                 }
             },
-            confirmButton={TextButton(onClick={selected=null}){Text("Закрыть")}}
+            confirmButton={TextButton(onClick={selected=null},modifier=Modifier.heightIn(min=48.dp)){Text("Закрыть",fontWeight=FontWeight.Bold)}}
         )
     }
 
@@ -184,7 +186,7 @@ private fun WorkGamesPanel(navigate:(String)->Unit,vm:WorkProgressViewModel=hilt
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(game.title,fontSize=18.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF24355E))
-                            Text("Уровень ${gameProgress.level} • пройдено ${gameProgress.completed}/10",fontSize=13.sp,color=Color(0xFF667085))
+                            Text("Доступен уровень ${gameProgress.level} · пройдено ${gameProgress.completed}/10",fontSize=14.sp,color=Color(0xFF596A84))
                             FinnyProgressTrack(gameProgress.completed/10f,Modifier.fillMaxWidth().padding(top=6.dp),height=6.dp)
                         }
                         Icon(Icons.Default.ChevronRight,null,tint=Color(0xFF456DDB))

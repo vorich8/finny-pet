@@ -2,6 +2,7 @@ package com.finny.pet.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.finny.pet.audio.FinnyAudio
 import com.finny.pet.data.database.ProfileEntity
 import com.finny.pet.data.repository.BalanceRepository
 import com.finny.pet.data.repository.ProfileRepository
@@ -144,5 +145,5 @@ data class SettingsUiState(val animations:Boolean=true,val sound:Boolean=true)
     private val _state=MutableStateFlow(SettingsUiState());val state:StateFlow<SettingsUiState> = _state
     init{viewModelScope.launch{val a=(progress.get("settings_animation")?.value?:1)==1;val s=(progress.get("settings_sound")?.value?:1)==1;_state.value=SettingsUiState(a,s);VisualPrefs.animationsEnabled.value=a;VisualPrefs.soundEnabled.value=s}}
     fun animation(enabled:Boolean)=viewModelScope.launch{_state.value=_state.value.copy(animations=enabled);VisualPrefs.animationsEnabled.value=enabled;progress.save(ProgressEntity("settings_animation",if(enabled)1 else 0))}
-    fun sound(enabled:Boolean)=viewModelScope.launch{_state.value=_state.value.copy(sound=enabled);VisualPrefs.soundEnabled.value=enabled;progress.save(ProgressEntity("settings_sound",if(enabled)1 else 0))}
+    fun sound(enabled:Boolean)=viewModelScope.launch{_state.value=_state.value.copy(sound=enabled);VisualPrefs.soundEnabled.value=enabled;progress.save(ProgressEntity("settings_sound",if(enabled)1 else 0));if(enabled)FinnyAudio.playPreview()}
 }

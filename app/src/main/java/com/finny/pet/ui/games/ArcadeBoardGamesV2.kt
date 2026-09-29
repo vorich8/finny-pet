@@ -89,18 +89,12 @@ fun SnakeGame(done: () -> Unit) {
     }
 
     FinnyCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Змейка", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color(0xFF25436D))
-                Text("Яблоки: $collected из 4", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF218350))
-            }
-            Text("🍎", fontSize = 32.sp)
-        }
-        Text(
+        GameStatCard("Яблоки","$collected / 4",Color(0xFFE5F7EC),Modifier.fillMaxWidth(),"●")
+        GameInstructionCard(
             if (crashed) "Змейка коснулась края или хвоста. Нажми «Заново» и попробуй другой путь."
             else if (running) "Веди змейку свайпом по полю или стрелками. Собери 4 яблока, не касаясь краёв и хвоста."
             else "Пауза. Нажми «Продолжить».",
-            fontSize = 15.sp, lineHeight = 19.sp, color = Color(0xFF465B7A)
+            Color(0xFF1D9A64), "Правила"
         )
         var swipe by remember { mutableStateOf(Offset.Zero) }
         BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -214,16 +208,8 @@ fun TetrisGame(done: () -> Unit) {
     }
     val visible = locked + if (running) rotatedBlocks(active).associate { it.y * columns + it.x to active.kind } else emptyMap()
     FinnyCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Block Blast", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color(0xFF25436D))
-                Text("Готовые линии: $lines из 2", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3475B9))
-            }
-            Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFE7EEFF)) {
-                Text("Следующая ■", Modifier.padding(8.dp), fontWeight = FontWeight.Bold, color = blockColors[next])
-            }
-        }
-        Text(if (over) "Поле заполнилось. Нажми «Заново» и освобождай ряды." else "Передвигай и поворачивай падающие фигуры. Заполни целиком два горизонтальных ряда.", fontSize = 15.sp, lineHeight = 19.sp, color = Color(0xFF465B7A))
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){GameStatCard("Линии","$lines / 2",Color(0xFFE5F1FF),Modifier.weight(1f),"=");GameStatCard("Следующая","■",Color(0xFFF1E9FF),Modifier.weight(1f))}
+        GameInstructionCard(if (over) "Поле заполнилось. Нажми «Заново» и старайся не оставлять пустоты." else "Передвигай и поворачивай фигуры. Полностью заполни два горизонтальных ряда — они исчезнут.",Color(0xFF2F83B8),"Правила")
         BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             val cell = ((maxWidth - 8.dp) / columns).coerceAtMost(29.dp)
             Surface(shape = RoundedCornerShape(19.dp), color = Color(0xFF132445), border = BorderStroke(3.dp, Color(0xFF69B7F4))) {

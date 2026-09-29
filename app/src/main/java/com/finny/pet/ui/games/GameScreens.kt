@@ -39,21 +39,14 @@ import com.finny.pet.ui.components.*
 @Composable private fun GameFrame(title:String,subtitle:String,level:Int,onBack:()->Unit,content: @Composable ColumnScope.() -> Unit){
     val id=when(title){"Весы"->"scales";"Приоритеты"->"priorities";"Копилка"->"piggy";"Цель"->"goal";"Магазин"->"shop";else->"change"};val info=EducationalGameCatalog.get(id)
     val accent=when(id){"scales"->Color(0xFF436FCE);"priorities"->Color(0xFFE78B36);"piggy"->Color(0xFF8E64D4);"goal"->Color(0xFF48A77C);"shop"->Color(0xFFE45F78);else->Color(0xFF357FB3)}
-    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(accent.copy(.22f),Color(0xFFFFF8E8),Color(0xFFF4E7FF))))){
+    Box(Modifier.fillMaxSize().background(gameBackground(accent))){
         Box(Modifier.size(180.dp).offset(x=(-55).dp,y=(-60).dp).background(Color.White.copy(.35f),CircleShape))
         Box(Modifier.size(130.dp).align(Alignment.BottomEnd).offset(x=35.dp,y=35.dp).background(Color(0xFFFFD86B).copy(.25f),CircleShape))
         LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp),verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(top=12.dp,bottom=28.dp)){
             item{
-                Surface(color=accent,shape=RoundedCornerShape(26.dp),border=androidx.compose.foundation.BorderStroke(1.dp,Color.White.copy(.45f)),shadowElevation=10.dp){
-                    Row(Modifier.fillMaxWidth().padding(10.dp),verticalAlignment=Alignment.CenterVertically){
-                        IconButton(onClick=onBack,Modifier.size(48.dp)){Icon(androidx.compose.material.icons.Icons.Default.ArrowBack,"Назад",tint=Color.White)}
-                        Surface(color=Color(0x33FFFFFF),shape=CircleShape){Icon(gameIcon(title),null,Modifier.padding(10.dp).size(28.dp),tint=Color.White)}
-                        Spacer(Modifier.width(11.dp))
-                        Column(Modifier.weight(1f)){Text(title,fontSize=25.sp,fontWeight=FontWeight.ExtraBold,color=Color.White,maxLines=1,overflow=TextOverflow.Ellipsis);Text(subtitle,fontSize=13.sp,color=Color.White.copy(.9f),maxLines=2,overflow=TextOverflow.Ellipsis)};Spacer(Modifier.width(6.dp));Surface(shape=CircleShape,color=Color(0x33FFFFFF)){Text("Ур. $level",Modifier.padding(horizontal=10.dp,vertical=6.dp),color=Color.White,fontWeight=FontWeight.Black,maxLines=1,softWrap=false)}
-                    }
-                }
+                PremiumGameHeader(title,subtitle,level,accent,gameIcon(title),onBack)
             }
-            item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp),color=Color.White.copy(.98f),border=androidx.compose.foundation.BorderStroke(1.dp,accent.copy(.25f)),shadowElevation=5.dp){Row(Modifier.fillMaxWidth().padding(13.dp),verticalAlignment=Alignment.Top){Text("💡",fontSize=23.sp);Spacer(Modifier.width(9.dp));Column(Modifier.weight(1f)){Text("Как играть",fontWeight=FontWeight.Black,color=accent);Text(info.instruction,fontSize=14.sp,lineHeight=19.sp,color=Color(0xFF53627A))}}}}
+            item{GameInstructionCard(info.instruction,accent,"Как играть")}
             item{Column(verticalArrangement=Arrangement.spacedBy(12.dp),content=content)}
         }
     }
@@ -146,6 +139,6 @@ private data class FallingSaving(val id:Int,val coin:Boolean,val value:Int,val i
     FinnyButton("✓ Выдать сдачу",{vm.check(onDone)},modifier=Modifier.fillMaxWidth())
 }}
 
-@Composable private fun GameStat(icon:String,label:String,value:String,color:Color,modifier:Modifier=Modifier){Surface(modifier.heightIn(min=68.dp),shape=RoundedCornerShape(18.dp),color=color,border=androidx.compose.foundation.BorderStroke(1.dp,Color.White),shadowElevation=4.dp){Column(Modifier.fillMaxWidth().padding(horizontal=5.dp,vertical=8.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Text("$icon $label",fontSize=10.sp,lineHeight=12.sp,fontWeight=FontWeight.Bold,color=Color(0xFF53627A),maxLines=2,textAlign=androidx.compose.ui.text.style.TextAlign.Center,overflow=TextOverflow.Ellipsis);Text(value,fontSize=19.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65),maxLines=1,softWrap=false)}}}
-@Composable private fun FinnySpeechCard(text:String){Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(21.dp),color=Color(0xFFFFE9B9),border=androidx.compose.foundation.BorderStroke(2.dp,Color(0xFFFFC45C))){Row(Modifier.padding(13.dp),verticalAlignment=Alignment.CenterVertically){Text("🐾",fontSize=29.sp);Spacer(Modifier.width(9.dp));Text(text,Modifier.weight(1f),fontSize=15.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF674910))}}}
+@Composable private fun GameStat(icon:String,label:String,value:String,color:Color,modifier:Modifier=Modifier)=GameStatCard(label,value,color,modifier,icon)
+@Composable private fun FinnySpeechCard(text:String)=FinnyCoachCard(text)
 private fun coinColor(value:Int)=when(value){1->Color(0xFFF4B84E);2->Color(0xFFFFD34D);5->Color(0xFFE7A92E);10->Color(0xFFFF9A66);20->Color(0xFF79A8FF);else->Color(0xFFF062A6)}

@@ -13,7 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,12 +49,11 @@ class ArcadeViewModel @Inject constructor(private val earn:EarnArcadeReward):Vie
 
 @Composable fun ArcadeGameScreen(kind:String,onBack:()->Unit,onDone:()->Unit,vm:ArcadeViewModel=hiltViewModel()){
     val title=when(kind){"snake"->"Змейка";"rocket"->"Ракета Финни";"pairs"->"Пары";"catch"->"Корзинка";"jumper"->"Джампер";else->"Block Blast"}
-    val icon=when(kind){"snake"->"🐍";"rocket"->"🚀";"pairs"->"🃏";"catch"->"🛒";"jumper"->"🐾";else->"💥"}
+    val icon=when(kind){"snake"->Icons.Default.Route;"rocket"->Icons.Default.RocketLaunch;"pairs"->Icons.Default.Style;"catch"->Icons.Default.ShoppingBasket;"jumper"->Icons.Default.Pets;else->Icons.Default.GridView}
+    val accent=when(kind){"snake"->Color(0xFF1D9A64);"rocket"->Color(0xFFD64D87);"pairs"->Color(0xFFCF841B);"catch"->Color(0xFF8056C7);"jumper"->Color(0xFF148E87);else->Color(0xFF2F83B8)}
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF120927),Color(0xFF37205E),Color(0xFF080E22))))){
         Column(Modifier.fillMaxSize().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(9.dp)){
-            Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp),color=Color(0xFF121C35),shadowElevation=9.dp,border=androidx.compose.foundation.BorderStroke(2.dp,Color(0xFFA855F7))){
-                Row(Modifier.fillMaxWidth().padding(7.dp),verticalAlignment=Alignment.CenterVertically){IconButton(onClick=onBack){Icon(Icons.Default.ArrowBack,"Назад",tint=Color.White)};Text(icon,fontSize=27.sp);Spacer(Modifier.width(8.dp));Column(Modifier.weight(1f)){Text(title,fontSize=22.sp,fontWeight=FontWeight.Black,color=Color.White,maxLines=1,overflow=TextOverflow.Ellipsis);Text("Игровой зал • награда ${GameEconomy.arcadeReward} монет",fontSize=12.sp,color=Color(0xFFC7D2FE),maxLines=2,overflow=TextOverflow.Ellipsis)};Text("◎",fontSize=25.sp,color=Color(0xFFFFD45B),fontWeight=FontWeight.Black)}
-            }
+            PremiumGameHeader(title,"Игровой зал • награда ${GameEconomy.arcadeReward} монет",1,accent,icon,onBack,"АРКАДА")
             when(kind){
                 "snake"->SnakeGame{vm.finish("Змейка",onDone)}
                 "rocket"->RocketGame{vm.finish("Ракета",onDone)}
@@ -66,14 +66,14 @@ class ArcadeViewModel @Inject constructor(private val earn:EarnArcadeReward):Vie
     }
 }
 
-private data class ArcadeCabinet(val id:String,val icon:String,val title:String,val rule:String,val top:Color,val bottom:Color)
+private data class ArcadeCabinet(val id:String,val icon:ImageVector,val title:String,val rule:String,val top:Color,val bottom:Color)
 private val arcadeCabinets=listOf(
-    ArcadeCabinet("snake","🐍","ЗМЕЙКА","4 яблока = победа",Color(0xFF4ADE80),Color(0xFF15803D)),
-    ArcadeCabinet("blockblast","💥","BLOCK BLAST","2 линии = победа",Color(0xFF38BDF8),Color(0xFF075985)),
-    ArcadeCabinet("pairs","🃏","ПАРЫ","Найди 6 совпадений",Color(0xFFF59E0B),Color(0xFFB45309)),
-    ArcadeCabinet("rocket","🚀","РАКЕТА","10 кристаллов = победа",Color(0xFFEC4899),Color(0xFF831843)),
-    ArcadeCabinet("catch","🛒","КОРЗИНКА","Лови фрукты, не бомбы",Color(0xFFA855F7),Color(0xFF581C87)),
-    ArcadeCabinet("jumper","🐾","ДЖАМПЕР","Прыгай по платформам",Color(0xFF14B8A6),Color(0xFF134E4A))
+    ArcadeCabinet("snake",Icons.Default.Route,"ЗМЕЙКА","Собери 4 яблока",Color(0xFF4ADE80),Color(0xFF15803D)),
+    ArcadeCabinet("blockblast",Icons.Default.GridView,"БЛОКИ","Собери 2 линии",Color(0xFF38BDF8),Color(0xFF075985)),
+    ArcadeCabinet("pairs",Icons.Default.Style,"ПАРЫ","Найди 6 совпадений",Color(0xFFF59E0B),Color(0xFFB45309)),
+    ArcadeCabinet("rocket",Icons.Default.RocketLaunch,"РАКЕТА","Собери 10 кристаллов",Color(0xFFEC4899),Color(0xFF831843)),
+    ArcadeCabinet("catch",Icons.Default.ShoppingBasket,"КОРЗИНКА","Лови фрукты, не бомбы",Color(0xFFA855F7),Color(0xFF581C87)),
+    ArcadeCabinet("jumper",Icons.Default.Pets,"ДЖАМПЕР","Прыгай по платформам",Color(0xFF14B8A6),Color(0xFF134E4A))
 )
 
 @Composable fun ArcadeHallPanel(navigate:(String)->Unit){
@@ -89,8 +89,8 @@ private val arcadeCabinets=listOf(
                 Surface(Modifier.width(230.dp).height(330.dp),shape=RoundedCornerShape(topStart=28.dp,topEnd=28.dp,bottomStart=15.dp,bottomEnd=15.dp),color=cabinet.bottom,border=BorderStroke(4.dp,cabinet.top),shadowElevation=13.dp){
                     Column(Modifier.padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(11.dp)){
                         Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(13.dp),color=Color(0xFF0F172A),border=BorderStroke(2.dp,Color.White.copy(.35f))){Text(cabinet.title,Modifier.padding(8.dp),textAlign=TextAlign.Center,fontWeight=FontWeight.Black,color=Color(0xFFFACC15),fontSize=14.sp)}
-                        Surface(Modifier.fillMaxWidth().weight(1f),shape=RoundedCornerShape(16.dp),color=Color(0xFF020617),border=BorderStroke(3.dp,Color(0xFF1E293B))){
-                            Column(Modifier.fillMaxSize(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Text(cabinet.icon,fontSize=65.sp);Text(cabinet.rule,textAlign=TextAlign.Center,color=Color.White,fontWeight=FontWeight.Bold,fontSize=13.sp)}
+                        Surface(Modifier.fillMaxWidth().weight(1f),shape=RoundedCornerShape(18.dp),color=Color(0xFF020617),border=BorderStroke(3.dp,Color(0xFF1E293B))){
+                            Column(Modifier.fillMaxSize(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Surface(Modifier.size(86.dp),shape=RoundedCornerShape(24.dp),color=cabinet.top.copy(.18f),border=BorderStroke(2.dp,cabinet.top)){Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Icon(cabinet.icon,null,Modifier.size(49.dp),tint=cabinet.top)}};Spacer(Modifier.height(12.dp));Text(cabinet.rule,textAlign=TextAlign.Center,color=Color.White,fontWeight=FontWeight.Bold,fontSize=14.sp)}
                         }
                         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                             Surface(Modifier.size(34.dp),shape=CircleShape,color=Color(0xFFEF4444),shadowElevation=4.dp){}
@@ -101,7 +101,7 @@ private val arcadeCabinets=listOf(
                 }
             }
         }
-        Surface(Modifier.fillMaxWidth().padding(horizontal=14.dp,vertical=8.dp),shape=RoundedCornerShape(18.dp),color=Color.White){Row(Modifier.fillMaxWidth().padding(10.dp),verticalAlignment=Alignment.CenterVertically){Text("🐾",fontSize=30.sp);Spacer(Modifier.width(9.dp));Text("Выбери автомат. Награда начисляется после завершённой игры, а не за простые нажатия.",Modifier.weight(1f),fontSize=13.sp,lineHeight=17.sp,fontWeight=FontWeight.Bold,color=Color(0xFF334155))}}
+        FinnyCoachCard("Выбери автомат. Награда начисляется после завершённой игры, а не за простые нажатия.",Modifier.padding(horizontal=14.dp,vertical=8.dp))
     }
 }
 
@@ -218,4 +218,4 @@ private data class SpaceObject(val lane:Int,val crystal:Boolean,val icon:String)
 @Composable private fun GameControl(label:String,modifier:Modifier=Modifier,onClick:()->Unit){Button(onClick=onClick,modifier=modifier.height(50.dp),shape=RoundedCornerShape(15.dp),contentPadding=PaddingValues(0.dp)){Text(label,fontSize=22.sp,fontWeight=FontWeight.Black)}}
 @Composable private fun ArcadeArrow(label:String,onClick:()->Unit){Surface(Modifier.size(52.dp).clickable(onClick=onClick),shape=CircleShape,color=Color(0xFF4169D8),shadowElevation=5.dp,border=androidx.compose.foundation.BorderStroke(2.dp,Color.White)){Box(contentAlignment=Alignment.Center){Text(label,color=Color.White,fontSize=20.sp,fontWeight=FontWeight.Black)}}}
 
-@Composable fun ArcadeResultScreen(onHome:()->Unit){Column(Modifier.fillMaxSize().navigationBarsPadding().background(Brush.verticalGradient(listOf(Color(0xFFFFE999),Color(0xFFE5ECFF)))).padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Text("Отличная игра!",fontSize=32.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Spacer(Modifier.height(18.dp));Surface(shape=CircleShape,color=Color.White,shadowElevation=12.dp){Text("+${GameEconomy.arcadeReward}",Modifier.padding(34.dp),fontSize=54.sp,fontWeight=FontWeight.Black,color=Color(0xFF456DDB))};Spacer(Modifier.height(18.dp));Text("${GameEconomy.arcadeReward} монет уже добавлены в кошелёк.\nАркада не начисляет учебные звёзды.",fontSize=18.sp,textAlign=TextAlign.Center,color=Color(0xFF53627A));Spacer(Modifier.height(30.dp));FinnyButton("Забрать монеты",onHome,modifier=Modifier.fillMaxWidth())}}
+@Composable fun ArcadeResultScreen(onHome:()->Unit){Column(Modifier.fillMaxSize().navigationBarsPadding().background(gameBackground(Color(0xFF3565D6))).padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Surface(shape=RoundedCornerShape(32.dp),color=Color.White,border=BorderStroke(1.dp,Color(0xFFC8D8F2)),shadowElevation=10.dp){Column(Modifier.padding(28.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)){Icon(Icons.Default.EmojiEvents,null,Modifier.size(70.dp),tint=Color(0xFFE6A521));Text("Отличная игра!",fontSize=30.sp,fontWeight=FontWeight.Black,color=GameChrome.Ink);Surface(shape=CircleShape,color=Color(0xFFFFF0B8)){Text("+${GameEconomy.arcadeReward} монет",Modifier.padding(horizontal=25.dp,vertical=16.dp),fontSize=28.sp,fontWeight=FontWeight.Black,color=Color(0xFF8C5B05))};Text("Монеты уже добавлены в кошелёк. Аркада тренирует внимание и не начисляет учебные звёзды.",fontSize=17.sp,lineHeight=23.sp,textAlign=TextAlign.Center,color=GameChrome.Muted);FinnyButton("Вернуться домой",onHome,modifier=Modifier.fillMaxWidth())}}}}

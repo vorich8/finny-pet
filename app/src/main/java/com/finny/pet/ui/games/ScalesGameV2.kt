@@ -73,7 +73,7 @@ fun ScalesScreen(onBack: () -> Unit, onDone: (Int) -> Unit, vm: ScalesViewModel 
 
     Box(
         Modifier.fillMaxSize().onGloballyPositioned { rootOrigin = it.boundsInRoot().topLeft }
-            .background(Brush.verticalGradient(listOf(Color(0xFFE0EDFF), Color(0xFFFFF4DB), Color(0xFFF0E8FF))))
+            .background(gameBackground(Color(0xFF3467BE)))
     ) {
         LazyColumn(
             Modifier.fillMaxSize(),
@@ -81,26 +81,10 @@ fun ScalesScreen(onBack: () -> Unit, onDone: (Int) -> Unit, vm: ScalesViewModel 
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
-                Surface(shape = RoundedCornerShape(23.dp), color = Color(0xFF3467BE), shadowElevation = 8.dp) {
-                    Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
-                            Icon(Icons.Default.ArrowBack, "Назад", tint = Color.White)
-                        }
-                        Column(Modifier.weight(1f)) {
-                            Text("Финансовые весы", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color.White)
-                            Text("Уровень ${state.level} из 10", fontSize = 14.sp, color = Color.White)
-                        }
-                        Icon(Icons.Default.Balance, null, tint = Color(0xFFFFDC72), modifier = Modifier.size(32.dp))
-                    }
-                }
+                PremiumGameHeader("Финансовые весы","Переноси карточки — весы сразу реагируют",state.level,Color(0xFF3467BE),Icons.Default.Balance,onBack)
             }
             item {
-                Surface(shape = RoundedCornerShape(17.dp), color = Color.White, shadowElevation = 4.dp) {
-                    Text(
-                        "Возьми карточку пальцем и перенеси: полученные деньги — налево, покупки — направо. Можно коснуться карточки, а затем чаши.",
-                        Modifier.fillMaxWidth().padding(13.dp), fontSize = 16.sp, lineHeight = 21.sp, color = Color(0xFF344866)
-                    )
-                }
+                GameInstructionCard("Зажми карточку и перенеси её на весы. Деньги, которые получаем, положи налево. Покупки и платежи — направо. Можно также нажать карточку, а затем чашу.",Color(0xFF3467BE),"Как управлять")
             }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -185,11 +169,7 @@ fun ScalesScreen(onBack: () -> Unit, onDone: (Int) -> Unit, vm: ScalesViewModel 
                     }
                 }
             }
-            item {
-                Surface(shape = RoundedCornerShape(17.dp), color = Color(0xFFFFE9B9)) {
-                    Text(if (selected == null) "Держи карточку и веди к чаше. Доход — слева, расход — справа." else "«${selected.title}»: деньги приходят или уходят? Нажми нужную чашу.", Modifier.fillMaxWidth().padding(13.dp), fontSize = 15.sp, color = Color(0xFF654712), fontWeight = FontWeight.SemiBold)
-                }
-            }
+            item { FinnyCoachCard(if (selected == null) "Держи карточку и веди к чаше. Доход — слева, расход — справа." else "«${selected.title}»: деньги приходят или уходят? Нажми нужную чашу.") }
         }
         dragging?.let { card ->
             val halfWidth = with(density) { 53.dp.toPx() }
@@ -206,12 +186,7 @@ fun ScalesScreen(onBack: () -> Unit, onDone: (Int) -> Unit, vm: ScalesViewModel 
 
 @Composable
 private fun ScaleStat(symbol: String, label: String, amount: Int, background: Color, modifier: Modifier) {
-    Surface(modifier.height(64.dp), shape = RoundedCornerShape(17.dp), color = background, shadowElevation = 3.dp) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text("$symbol $label", fontSize = 12.sp, color = Color(0xFF4D5E7A), fontWeight = FontWeight.Bold)
-            Text("$amount", fontSize = 20.sp, color = Color(0xFF263A65), fontWeight = FontWeight.Black)
-        }
-    }
+    GameStatCard(label,amount.toString(),background,modifier, symbol)
 }
 
 @Composable

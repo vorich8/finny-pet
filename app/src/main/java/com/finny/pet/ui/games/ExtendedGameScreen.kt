@@ -62,24 +62,12 @@ fun ExtendedGameScreen(onBack:()->Unit,onDone:(Int)->Unit,vm:ExtendedGameViewMod
     val heading=headings[state.gameId]?:headings.getValue("shopping_list")
     val info=EducationalGameCatalog.get(state.gameId)
     state.hint?.let{FeedbackDialog("Давай разберёмся",it,vm::clearHint)}
-    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(heading.accent.copy(.23f),Color(0xFFFFF7E5),Color(0xFFF1E9FF))))){
+    Box(Modifier.fillMaxSize().background(gameBackground(heading.accent))){
         LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(bottom=30.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
             item{
-                Surface(color=heading.accent,shape=RoundedCornerShape(bottomStart=28.dp,bottomEnd=28.dp),shadowElevation=10.dp){
-                    Row(Modifier.fillMaxWidth().padding(10.dp),verticalAlignment=Alignment.CenterVertically){
-                        IconButton(onClick=onBack,modifier=Modifier.size(48.dp)){Icon(Icons.Default.ArrowBack,"Назад",tint=Color.White)}
-                        Surface(shape=CircleShape,color=Color.White.copy(.18f)){Icon(heading.icon,null,Modifier.padding(9.dp).size(28.dp),tint=Color.White)}
-                        Spacer(Modifier.width(10.dp))
-                        Column(Modifier.weight(1f)){Text(heading.title,fontSize=22.sp,fontWeight=FontWeight.Black,color=Color.White,maxLines=1,overflow=TextOverflow.Ellipsis);Text("Уровень ${state.level} из 10",color=Color.White.copy(.9f),fontSize=14.sp,maxLines=1)}
-                        Spacer(Modifier.width(6.dp));Surface(shape=CircleShape,color=Color.White.copy(.18f)){Text(if(state.mistakes==0)"★ 3" else "✕ ${state.mistakes}",Modifier.padding(horizontal=10.dp,vertical=7.dp),color=Color(0xFFFFE17A),fontWeight=FontWeight.Black,maxLines=1,softWrap=false)}
-                    }
-                }
+                PremiumGameHeader(heading.title,"Ошибок: ${state.mistakes} • выполни задание самостоятельно",state.level,heading.accent,heading.icon,onBack)
             }
-            item{
-                Surface(Modifier.padding(horizontal=15.dp).fillMaxWidth(),shape=RoundedCornerShape(20.dp),color=Color.White,shadowElevation=5.dp){
-                    Row(Modifier.fillMaxWidth().padding(13.dp),verticalAlignment=Alignment.Top){Text("💡",fontSize=23.sp);Spacer(Modifier.width(9.dp));Column(Modifier.weight(1f)){Text("Задача",fontWeight=FontWeight.Black,color=heading.accent);Text(info.instruction,fontSize=14.sp,lineHeight=19.sp,color=Color(0xFF53627A))}}
-                }
-            }
+            item{Box(Modifier.padding(horizontal=15.dp)){GameInstructionCard(info.instruction,heading.accent,"Задача")}}
             item{
                 Box(Modifier.padding(horizontal=15.dp)){when(state.gameId){
                     "shopping_list"->ShoppingListGame(state.level,{vm.mistake(it)},{vm.complete(onDone)})
@@ -95,11 +83,11 @@ fun ExtendedGameScreen(onBack:()->Unit,onDone:(Int)->Unit,vm:ExtendedGameViewMod
 }
 
 @Composable private fun MiniStat(icon:String,label:String,value:String,color:Color,modifier:Modifier=Modifier){
-    Surface(modifier.heightIn(min=68.dp),shape=RoundedCornerShape(18.dp),color=color,border=BorderStroke(1.dp,Color.White),shadowElevation=4.dp){Column(Modifier.fillMaxWidth().padding(horizontal=5.dp,vertical=8.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Text("$icon $label",fontSize=10.sp,lineHeight=12.sp,fontWeight=FontWeight.Bold,color=Color(0xFF52617B),maxLines=2,textAlign=TextAlign.Center,overflow=TextOverflow.Ellipsis);Text(value,fontSize=19.sp,fontWeight=FontWeight.Black,color=Color(0xFF23375F),maxLines=1,softWrap=false)}}
+    GameStatCard(label,value,color,modifier,icon)
 }
 
 @Composable private fun FinnySpeech(text:String){
-    Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp),color=Color(0xFFFFE9B9),border=BorderStroke(2.dp,Color(0xFFFFC45C))){Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){Text("🐾",fontSize=28.sp);Spacer(Modifier.width(9.dp));Text(text,Modifier.weight(1f),fontSize=14.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF674910))}}
+    FinnyCoachCard(text)
 }
 
 private data class ListedItem(val id:String,val icon:String,val name:String,val price:Int,val needed:Boolean)
@@ -118,7 +106,7 @@ private fun listLevel(level:Int):Pair<Int,List<ListedItem>>{
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){MiniStat("◎","Бюджет",data.first.toString(),Color(0xFFFFF0C8),Modifier.weight(1f));MiniStat("#","В корзине",total.toString(),Color(0xFFE6F0FF),Modifier.weight(1f));MiniStat("✓","Остаток",(data.first-total).toString(),Color(0xFFDFF7EB),Modifier.weight(1f))}
         Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(23.dp),color=Color(0xFFFFF8E9),border=BorderStroke(2.dp,Color(0xFFFFC65D)),shadowElevation=6.dp){Column(Modifier.padding(14.dp)){Text("📌 СПИСОК ФИННИ",fontWeight=FontWeight.Black,color=Color(0xFF775312));required.forEach{Text("✓ ${it.icon} ${it.name} — ${it.price} монет",fontWeight=FontWeight.Bold,color=Color(0xFF354563))}}}
         Text("Витрина магазина",fontSize=19.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65))
-        LazyRow(horizontalArrangement=Arrangement.spacedBy(9.dp)){items(data.second){item->val checked=item.id in selected;Surface(Modifier.width(116.dp).clickable{if(checked)selected.remove(item.id)else if(total+item.price<=data.first)selected.add(item.id)else wrong("На ${item.name.lowercase()} не хватает ${total+item.price-data.first} монет. Убери необязательную покупку.")},shape=RoundedCornerShape(19.dp),color=if(checked)Color(0xFFDFF7EB)else Color.White,border=BorderStroke(if(checked)3.dp else 1.dp,if(checked)Color(0xFF36A36F)else Color(0xFFD6DFEC)),shadowElevation=4.dp){Column(Modifier.padding(11.dp),horizontalAlignment=Alignment.CenterHorizontally){Text(item.icon,fontSize=40.sp);Text(item.name,fontSize=13.sp,fontWeight=FontWeight.Bold,maxLines=1);Text("${item.price} мон.",fontWeight=FontWeight.Black,color=Color(0xFFB86E00));Text(if(checked)"В корзине" else "Выбрать",fontSize=11.sp,color=if(checked)Color(0xFF198655)else Color(0xFF68748A))}}}}
+        LazyRow(horizontalArrangement=Arrangement.spacedBy(9.dp)){items(data.second){item->val checked=item.id in selected;Surface(Modifier.width(124.dp).heightIn(min=150.dp).clickable{if(checked)selected.remove(item.id)else if(total+item.price<=data.first)selected.add(item.id)else wrong("На ${item.name.lowercase()} не хватает ${total+item.price-data.first} монет. Убери необязательную покупку.")},shape=RoundedCornerShape(19.dp),color=if(checked)Color(0xFFDFF7EB)else Color.White,border=BorderStroke(if(checked)3.dp else 1.dp,if(checked)Color(0xFF36A36F)else Color(0xFFD6DFEC)),shadowElevation=4.dp){Column(Modifier.padding(11.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)){Text(item.icon,fontSize=40.sp);Text(item.name,fontSize=14.sp,fontWeight=FontWeight.Bold,maxLines=2);Text("${item.price} мон.",fontWeight=FontWeight.Black,color=Color(0xFFB86E00));Text(if(checked)"В корзине" else "Добавить",fontSize=12.sp,fontWeight=FontWeight.Bold,color=if(checked)Color(0xFF198655)else Color(0xFF52617B))}}}}
         FinnySpeech("Сверяй корзину со списком. Сначала — всё необходимое, а желания только на остаток.")
         FinnyButton("Проверить покупки",{val chosen=selected.toSet();val need=required.map{it.id}.toSet();when{!chosen.containsAll(need)->wrong("В корзине не хватает: ${required.filter{it.id !in chosen}.joinToString{it.name}}. Найди эти товары в списке.");chosen.any{id->data.second.first{it.id==id}.needed.not()}->wrong("В задании нужны только товары из списка. Убери необязательные покупки и сохрани остаток.");else->done()}},modifier=Modifier.fillMaxWidth())
     }
@@ -203,7 +191,7 @@ private data class RaceRunner(val id:Int,val item:RaceItem,val lane:Int,val x:Fl
                 }
             }
         }
-        Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Color(0xFFFFE9B9),border=BorderStroke(1.dp,Color(0xFFFFC45C))){Text(helper,Modifier.padding(horizontal=13.dp,vertical=9.dp),fontSize=13.sp,lineHeight=17.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF674910))}
+        FinnyCoachCard(text=helper,modifier=Modifier.fillMaxWidth())
         if(!running){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(9.dp)){OutlinedButton(onClick={runId++},modifier=Modifier.weight(1f).height(52.dp),shape=RoundedCornerShape(17.dp)){Text("Ещё раз",fontWeight=FontWeight.Black)};FinnyButton("Завершить",done,modifier=Modifier.weight(1f))}}
     }
 }

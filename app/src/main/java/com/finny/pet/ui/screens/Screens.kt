@@ -1,5 +1,7 @@
 package com.finny.pet.ui.screens
 
+import android.content.Context
+import android.media.AudioManager
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -20,6 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,8 +48,17 @@ import kotlinx.coroutines.delay
     Box(Modifier.fillMaxSize()){
         Image(painterResource(R.drawable.room_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent,Color.White.copy(.35f),Color.White.copy(.95f)))))
-        Column(Modifier.fillMaxSize().padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Bottom){
-            PetView(showLabels=false); Text("Привет!",fontSize=30.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF25365C)); Text("Скоро у тебя появится лесной друг",fontSize=18.sp,color=Color(0xFF42506C)); Spacer(Modifier.height(20.dp)); FinnyButton("Выбрать друга",onNext,modifier=Modifier.fillMaxWidth());Spacer(Modifier.height(14.dp))
+        Column(Modifier.fillMaxSize().padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Bottom){
+            PetView(showLabels=false)
+            Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(28.dp),color=Color.White.copy(.96f),shadowElevation=12.dp,border=BorderStroke(1.dp,Color(0xFFD9E4F4))){
+                Column(Modifier.padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(7.dp)){
+                    Text("Привет!",fontSize=30.sp,fontWeight=FontWeight.Black,color=Color(0xFF25365C))
+                    Text("Выбери нового друга и вместе учитесь обращаться с монетами.",fontSize=17.sp,lineHeight=23.sp,color=Color(0xFF42506C),textAlign=androidx.compose.ui.text.style.TextAlign.Center)
+                    Spacer(Modifier.height(5.dp))
+                    FinnyButton("Выбрать друга",onNext,modifier=Modifier.fillMaxWidth())
+                }
+            }
+            Spacer(Modifier.height(10.dp))
         }
     }
 }
@@ -80,8 +92,8 @@ import kotlinx.coroutines.delay
             item{Text("Кто станет твоим другом?",fontSize=28.sp,fontWeight=FontWeight.Black,color=Color(0xFF20365F));Text("Выбери питомца и придумай ему имя",fontSize=16.sp,color=Color(0xFF596A84))}
             item{Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(12.dp)){pets.forEach{pet->
                 val selected=species==pet.first
-                Card(Modifier.width(188.dp).height(244.dp).clickable{species=pet.first},shape=RoundedCornerShape(28.dp),border=BorderStroke(if(selected)4.dp else 1.dp,if(selected)Color(0xFFFFC83D) else Color.White),colors=CardDefaults.cardColors(containerColor=Color.White.copy(.95f)),elevation=CardDefaults.cardElevation(if(selected)12.dp else 5.dp)){
-                    Column(Modifier.fillMaxSize().padding(8.dp),horizontalAlignment=Alignment.CenterHorizontally){Box(Modifier.weight(1f),contentAlignment=Alignment.Center){PetView(pet.second,variantId="${pet.first}_1",showLabels=false)};Text(pet.second,fontSize=20.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65));Text(pet.third,fontSize=12.sp,color=Color(0xFF667085));Text(if(selected)"✓ Выбран" else "Выбрать",Modifier.padding(vertical=5.dp),fontWeight=FontWeight.Bold,color=if(selected)Color(0xFF2F7C58) else Color(0xFF456DDB))}
+                Card(Modifier.width(196.dp).height(258.dp).clickable{species=pet.first},shape=RoundedCornerShape(28.dp),border=BorderStroke(if(selected)4.dp else 1.dp,if(selected)Color(0xFFFFC83D) else Color(0xFFD9E4F4)),colors=CardDefaults.cardColors(containerColor=Color.White.copy(.97f)),elevation=CardDefaults.cardElevation(if(selected)12.dp else 5.dp)){
+                    Column(Modifier.fillMaxSize().padding(10.dp),horizontalAlignment=Alignment.CenterHorizontally){Box(Modifier.weight(1f),contentAlignment=Alignment.Center){PetView(pet.second,variantId="${pet.first}_1",showLabels=false)};Text(pet.second,fontSize=20.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65));Text(pet.third,fontSize=14.sp,color=Color(0xFF596A84),maxLines=1);Surface(Modifier.padding(top=6.dp).heightIn(min=36.dp),shape=CircleShape,color=if(selected)Color(0xFFDDF5E8) else Color(0xFFEAF0FF)){Row(Modifier.padding(horizontal=14.dp,vertical=7.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)){if(selected)Icon(Icons.Default.CheckCircle,null,Modifier.size(18.dp),tint=Color(0xFF2F7C58));Text(if(selected)"Выбран" else "Выбрать",fontWeight=FontWeight.Bold,color=if(selected)Color(0xFF2F7C58) else Color(0xFF365FC4))}}}
                 }
             }}}
             item{OutlinedTextField(value=name,onValueChange={name=it.take(16)},label={Text("Как назовём друга?")},modifier=Modifier.fillMaxWidth(),singleLine=true,shape=RoundedCornerShape(20.dp));Spacer(Modifier.height(8.dp));FinnyButton("Начать приключение",{vm.create(name,"${species}_1",onDone)},enabled=name.isNotBlank(),modifier=Modifier.fillMaxWidth())}
@@ -89,18 +101,19 @@ import kotlinx.coroutines.delay
     }
 }
 
-@Composable fun HomeScreen(nav:NavHostController,vm:HomeViewModel=hiltViewModel(),storyVm:StoryViewModel=hiltViewModel()){
+@Composable fun HomeScreen(nav:NavHostController,vm:HomeViewModel=hiltViewModel(),storyVm:StoryViewModel=hiltViewModel(),settingsVm:SettingsViewModel=hiltViewModel()){
     val home by vm.state.collectAsState()
     val story by storyVm.state.collectAsState()
+    val settings by settingsVm.state.collectAsState()
     story.message?.let{FeedbackDialog("План дня",it,storyVm::clear)}
     val announcement by vm.announcement.collectAsState();announcement?.let{FeedbackDialog("Новый этап открыт!",it,vm::dismissAnnouncement,FinnySfx.LEVEL_UP)}
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    val labels=listOf("Дом","Карта","Знания","Цели")
+    val labels=listOf("Дом","Карта","Ещё","Цели")
     val icons=listOf(R.drawable.nav_home,R.drawable.nav_map,R.drawable.nav_knowledge,R.drawable.nav_goals)
     Scaffold(containerColor=Color(0xFFF6F2EB),bottomBar={FinnyBottomBar(labels,icons,tab){tab=it}}){pad->
         Box(Modifier.padding(pad).fillMaxSize()){
             when(tab){
-                0->HomeDashboard(home.petName,home.coins,home.stars,home.variantId,home.equippedSkin,home.hunger,home.water,home.joy,home.health,home.level,home.petStage,home.period,story,home.suggestedTask,home.suggestedLevel,onTask={nav.navigate(Routes.educationalGame(home.suggestedGameId,home.suggestedLevel))},onAllTasks={nav.navigate(Routes.building("work"))},onFinishDay={storyVm.check{nav.navigate(Routes.DaySummary)}},onPet={nav.navigate(Routes.Pet)})
+                0->HomeDashboard(home.petName,home.coins,home.stars,home.variantId,home.equippedSkin,home.hunger,home.water,home.joy,home.health,home.level,home.petStage,home.period,story,home.suggestedTask,home.suggestedLevel,settings.sound,onSoundToggle={settingsVm.sound(!settings.sound)},onTask={nav.navigate(Routes.educationalGame(home.suggestedGameId,home.suggestedLevel))},onAllTasks={nav.navigate(Routes.building("work"))},onFinishDay={storyVm.check{nav.navigate(Routes.DaySummary)}},onPet={nav.navigate(Routes.Pet)})
                 1->CityMapScreen(home.level,home.period,home.coins){nav.navigate(Routes.building(it))}
                 2->MoreHub(onAdult={nav.navigate(Routes.Adult)})
                 else->GoalsHub()
@@ -110,7 +123,7 @@ import kotlinx.coroutines.delay
 }
 
 @Composable private fun FinnyBottomBar(labels:List<String>,icons:List<Int>,selected:Int,onSelect:(Int)->Unit){
-    val iconSizes=listOf(36.dp,43.dp,36.dp,42.dp)
+    val iconSize=34.dp
     Surface(color=Color(0xFF233F7D),shadowElevation=14.dp){
         Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=8.dp,vertical=6.dp).height(68.dp),horizontalArrangement=Arrangement.spacedBy(3.dp)){
             labels.indices.forEach{i->
@@ -118,8 +131,9 @@ import kotlinx.coroutines.delay
                 val scale by animateFloatAsState(if(active)1f else .91f,spring(),label="navScale")
                 Surface(Modifier.weight(1f).fillMaxHeight().clickable{if(i!=selected){FinnyAudio.play(FinnySfx.NAVIGATE);onSelect(i)}},shape=RoundedCornerShape(29.dp),color=if(active)Color(0xFFF8FBFF) else Color.Transparent){
                     Column(Modifier.fillMaxSize(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
-                        Image(painterResource(icons[i]),labels[i],Modifier.size(iconSizes[i]).graphicsLayer{scaleX=scale;scaleY=scale},contentScale=ContentScale.Fit,alpha=if(active)1f else .92f)
-                        Text(labels[i],fontSize=12.sp,color=if(active)Color(0xFF19345F) else Color.White,fontWeight=if(active)FontWeight.ExtraBold else FontWeight.SemiBold,maxLines=1)
+                        if(i==2)Icon(Icons.Default.MoreHoriz,labels[i],Modifier.size(iconSize).graphicsLayer{scaleX=scale;scaleY=scale},tint=if(active)Color(0xFF456DDB) else Color(0xFF8CB3FF))
+                        else Image(painterResource(icons[i]),labels[i],Modifier.size(iconSize).graphicsLayer{scaleX=scale;scaleY=scale},contentScale=ContentScale.Fit,alpha=if(active)1f else .92f)
+                        Text(labels[i],fontSize=14.sp,color=if(active)Color(0xFF19345F) else Color.White,fontWeight=if(active)FontWeight.ExtraBold else FontWeight.SemiBold,maxLines=1)
                     }
                 }
             }
@@ -128,7 +142,7 @@ import kotlinx.coroutines.delay
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun HomeDashboard(name:String,coins:Int,stars:Int,variantId:String,equippedSkin:String?,hunger:Int,water:Int,joy:Int,health:Int,level:Int,petStage:Int,period:Int,story:StoryUiState,suggestedTask:String,suggestedLevel:Int,onTask:()->Unit,onAllTasks:()->Unit,onFinishDay:()->Unit,onPet:()->Unit){
+@Composable private fun HomeDashboard(name:String,coins:Int,stars:Int,variantId:String,equippedSkin:String?,hunger:Int,water:Int,joy:Int,health:Int,level:Int,petStage:Int,period:Int,story:StoryUiState,suggestedTask:String,suggestedLevel:Int,soundOn:Boolean,onSoundToggle:()->Unit,onTask:()->Unit,onAllTasks:()->Unit,onFinishDay:()->Unit,onPet:()->Unit){
     var showPlan by rememberSaveable{mutableStateOf(false)}
     val phrases=when{
         health<100->listOf("Мне нездоровится. Лекарство из рюкзака поможет поправиться.","Давай позаботимся о здоровье.")
@@ -143,11 +157,13 @@ import kotlinx.coroutines.delay
         Image(painterResource(R.drawable.room_background),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x26152C54),Color.Transparent,Color(0xA91C315B)))))
         Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal=16.dp,vertical=10.dp),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){
-            Surface(Modifier.weight(1f),color=Color(0xF02A477D),shape=RoundedCornerShape(22.dp),border=BorderStroke(1.dp,Color.White.copy(.4f)),shadowElevation=9.dp){Row(Modifier.padding(horizontal=13.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(38.dp),shape=CircleShape,color=Color(0x33FFFFFF)){Box(contentAlignment=Alignment.Center){Text("🐾",fontSize=20.sp)}};Spacer(Modifier.width(9.dp));Column(Modifier.weight(1f)){Text(name,color=Color.White,fontWeight=FontWeight.Black,fontSize=18.sp,maxLines=1,overflow=TextOverflow.Ellipsis);Text("Ур. $level  •  ★ $stars",color=Color(0xFFDCE8FF),fontSize=13.sp,maxLines=1)}}};CoinCounter(coins)
+            Surface(Modifier.weight(1f),color=Color(0xF02A477D),shape=RoundedCornerShape(22.dp),border=BorderStroke(1.dp,Color.White.copy(.4f)),shadowElevation=9.dp){Row(Modifier.padding(horizontal=13.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(38.dp),shape=CircleShape,color=Color(0x33FFFFFF)){Box(contentAlignment=Alignment.Center){Text("🐾",fontSize=20.sp)}};Spacer(Modifier.width(9.dp));Column(Modifier.weight(1f)){Text(name,color=Color.White,fontWeight=FontWeight.Black,fontSize=18.sp,maxLines=1,overflow=TextOverflow.Ellipsis);Text("Ур. $level  •  ★ $stars",color=Color(0xFFDCE8FF),fontSize=13.sp,maxLines=1)}}}
+            IconButton(onClick=onSoundToggle,modifier=Modifier.size(48.dp).background(Color(0xF02A477D),CircleShape)){Icon(if(soundOn)Icons.Default.VolumeUp else Icons.Default.VolumeOff,if(soundOn)"Выключить звук" else "Включить звук",tint=Color.White)}
+            CoinCounter(coins)
         }
-        PetView(name=name,emotion=if(health<100)"SICK" else if(hunger<25||water<25||joy<30)"SAD" else "JOY",variantId=variantId,stage=petStage,skinId=equippedSkin,showLabels=false,sizeOverride=292.dp,modifier=Modifier.align(Alignment.Center).offset(y=(-34).dp).clickable{FinnyAudio.play(FinnySfx.PET);onPet()})
+        PetView(name=name,emotion=if(health<100)"SICK" else if(hunger<25||water<25||joy<30)"SAD" else "JOY",variantId=variantId,stage=petStage,skinId=equippedSkin,showLabels=false,sizeOverride=292.dp,modifier=Modifier.align(Alignment.Center).offset(y=(-59).dp).clickable{FinnyAudio.play(FinnySfx.PET);onPet()})
         Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(start=14.dp,end=14.dp,bottom=8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
-            Surface(Modifier.align(Alignment.CenterHorizontally).widthIn(max=330.dp),shape=CircleShape,color=Color.White,shadowElevation=6.dp,border=BorderStroke(1.dp,if(health<100)Color(0xFFF17775) else Color(0xFFB5C6E8))){Row(Modifier.padding(horizontal=14.dp,vertical=7.dp),verticalAlignment=Alignment.CenterVertically){Text(if(health<100)"❤" else "🐾",fontSize=17.sp);Spacer(Modifier.width(7.dp));Text(phrases[phraseIndex%phrases.size],fontWeight=FontWeight.Bold,fontSize=12.sp,lineHeight=15.sp,color=Color(0xFF263A65),maxLines=2)}}
+            Surface(Modifier.align(Alignment.CenterHorizontally).widthIn(max=330.dp),shape=RoundedCornerShape(20.dp),color=Color.White,shadowElevation=6.dp,border=BorderStroke(1.dp,if(health<100)Color(0xFFF17775) else Color(0xFFB5C6E8))){Row(Modifier.padding(horizontal=14.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically){Text(if(health<100)"❤" else "🐾",fontSize=17.sp);Spacer(Modifier.width(7.dp));Text(phrases[phraseIndex%phrases.size],fontWeight=FontWeight.Bold,fontSize=14.sp,lineHeight=18.sp,color=Color(0xFF263A65),maxLines=2)}}
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){NeedChip("🍲","Еда",hunger/100f,Color(0xFF63C86A),Modifier.weight(1f));NeedChip("💧","Вода",water/100f,Color(0xFF45A9ED),Modifier.weight(1f));NeedChip(if(health<100)"🤒" else "😊",if(health<100)"Здоровье" else "Радость",(if(health<100)health else joy)/100f,if(health<100)Color(0xFFF17775) else Color(0xFFFFC446),Modifier.weight(1f))}
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
                 Button(onClick=if(story.ready)onFinishDay else onTask,modifier=Modifier.weight(1.35f).height(56.dp),shape=RoundedCornerShape(18.dp),colors=ButtonDefaults.buttonColors(containerColor=if(story.ready)Color(0xFF338B63) else Color(0xFF4169D8))){Icon(if(story.ready)Icons.Default.CheckCircle else Icons.Default.PlayArrow,null);Spacer(Modifier.width(7.dp));Text(if(story.ready)"Итоги дня" else "К заданию: $suggestedTask",maxLines=2,fontWeight=FontWeight.Black,fontSize=14.sp)}
@@ -191,7 +207,7 @@ import kotlinx.coroutines.delay
     LazyColumn(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFFFFEDB5),Color(0xFFDCEBFF)))).padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(14.dp)){item{Text("Как ты справился",fontSize=30.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65))};item{Box(Modifier.height(280.dp)){PetView(emotion="Радость",stage=3,showLabels=false)}};item{FinnyCard(Modifier.fillMaxWidth()){Text("Мы сделали это вместе!",fontSize=22.sp,fontWeight=FontWeight.Black);Text("За неделю заработано: ${s.weekEarned} монет");Text("Отложено на цель: ${s.weekSaved} монет");Text("Пройдено заданий: ${a.completed}");Text("Получено звёзд: ${a.stars}")}};item{FinnyButton("Вернуться домой",onHome,modifier=Modifier.fillMaxWidth())}}
 }
 
-@Composable private fun NeedChip(icon:String,title:String,progress:Float,color:Color,modifier:Modifier=Modifier){Surface(modifier.height(50.dp),shape=RoundedCornerShape(18.dp),color=Color.White.copy(.96f),border=BorderStroke(1.dp,Color.White),shadowElevation=5.dp){Column(Modifier.fillMaxSize().padding(horizontal=8.dp,vertical=6.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(4.dp)){Text("$icon $title",fontWeight=FontWeight.ExtraBold,fontSize=11.sp,color=Color(0xFF263A65),maxLines=1);FinnyProgressTrack(progress,Modifier.fillMaxWidth(),color=color,height=7.dp)}}}
+@Composable private fun NeedChip(icon:String,title:String,progress:Float,color:Color,modifier:Modifier=Modifier){Surface(modifier.height(54.dp),shape=RoundedCornerShape(18.dp),color=Color.White,border=BorderStroke(1.dp,Color(0xFFD5E0F2)),shadowElevation=5.dp){Column(Modifier.fillMaxSize().padding(horizontal=8.dp,vertical=7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)){Text("$icon $title",fontWeight=FontWeight.ExtraBold,fontSize=13.sp,color=Color(0xFF263A65),maxLines=1,softWrap=false,overflow=TextOverflow.Ellipsis);FinnyProgressTrack(progress,Modifier.fillMaxWidth(),color=color,height=8.dp)}}}
 
 @Composable private fun SectionTitle(text:String,modifier:Modifier=Modifier){Text(text,modifier=modifier,fontSize=25.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF24355E),maxLines=1,overflow=TextOverflow.Ellipsis)}
 
@@ -213,7 +229,23 @@ private data class CatalogGood(val icon:String,val title:String,val price:Int,va
 
 @Composable private fun MoreHub(onAdult:()->Unit,vm:SettingsViewModel=hiltViewModel()){
     val s by vm.state.collectAsState();var settings by remember{mutableStateOf(false)}
-    if(settings)AlertDialog(onDismissRequest={settings=false},title={Text("Звук и анимация")},text={Column{Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("Анимация",Modifier.weight(1f),fontSize=16.sp);Switch(s.animations,vm::animation)};Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("Звук",Modifier.weight(1f),fontSize=16.sp);Switch(s.sound,vm::sound)};Text("Настройки сохраняются на устройстве.",fontSize=14.sp,color=Color(0xFF667085))}},confirmButton={FinnyButton("Готово",{settings=false})})
+    val context=LocalContext.current
+    val audioManager=remember(context){context.getSystemService(Context.AUDIO_SERVICE) as AudioManager}
+    var mediaVolume by remember{mutableIntStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC))}
+    if(settings)AlertDialog(
+        onDismissRequest={settings=false},
+        title={Text("Звук и анимация",fontWeight=FontWeight.Black,color=Color(0xFF21345B))},
+        text={Column(verticalArrangement=Arrangement.spacedBy(14.dp)){
+            Row(Modifier.fillMaxWidth().heightIn(min=48.dp),verticalAlignment=Alignment.CenterVertically){Text("Анимация",Modifier.weight(1f),fontSize=16.sp);Switch(s.animations,vm::animation)}
+            Row(Modifier.fillMaxWidth().heightIn(min=48.dp),verticalAlignment=Alignment.CenterVertically){Text("Звук игры",Modifier.weight(1f),fontSize=16.sp);Switch(s.sound,vm::sound)}
+            OutlinedButton(onClick={mediaVolume=audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);FinnyAudio.playPreview()},enabled=s.sound,modifier=Modifier.fillMaxWidth().heightIn(min=52.dp),shape=RoundedCornerShape(16.dp)){
+                Icon(Icons.Default.VolumeUp,null);Spacer(Modifier.width(8.dp));Text("Проверить звук",fontSize=16.sp,fontWeight=FontWeight.Bold)
+            }
+            Text(if(mediaVolume==0)"Громкость мультимедиа на устройстве выключена. Прибавь её кнопкой телефона." else "Не слышно? Прибавь громкость мультимедиа на телефоне и нажми ещё раз.",fontSize=14.sp,color=Color(0xFF40516F),lineHeight=20.sp)
+            Text("Настройки сохраняются на устройстве.",fontSize=14.sp,color=Color(0xFF667085))
+        }},
+        confirmButton={FinnyButton("Готово",{settings=false})}
+    )
     LazyColumn(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){item{SectionTitle("Ещё")};item{MenuCard(Icons.Default.MenuBook,"Знания","Короткие уроки встроены в задания"){} };item{MenuCard(Icons.Default.VolumeUp,"Звук и анимация","Настройки доступности"){settings=true} };item{MenuCard(Icons.Default.SupervisorAccount,"Для взрослых","Прогресс и сброс профиля",onAdult)};item{Text("Все данные хранятся только на этом устройстве. Регистрация, реклама и реальные платежи отсутствуют.",fontSize=14.sp,color=Color(0xFF667085),modifier=Modifier.padding(12.dp))}}
 }
 @Composable private fun MenuCard(icon:androidx.compose.ui.graphics.vector.ImageVector,title:String,subtitle:String,onClick:()->Unit){FinnyCard(Modifier.fillMaxWidth().clickable{FinnyAudio.play(FinnySfx.NAVIGATE);onClick()}){Row(verticalAlignment=Alignment.CenterVertically){Icon(icon,null,Modifier.size(32.dp),tint=Color(0xFF456DDB));Spacer(Modifier.width(14.dp));Column(Modifier.weight(1f)){Text(title,fontSize=18.sp,fontWeight=FontWeight.Bold);Text(subtitle,fontSize=15.sp,color=Color(0xFF667085))};Icon(Icons.Default.ChevronRight,null)}}}
