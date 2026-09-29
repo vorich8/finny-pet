@@ -9,7 +9,7 @@
 - Документация PDF: https://github.com/vorich8/finny-pet/blob/main/output/pdf/FinnyPet_Documentation_2.3.1.pdf
 - Иконка 512×512: https://github.com/vorich8/finny-pet/blob/main/docs/icon_512.png
 - Скриншоты: https://github.com/vorich8/finny-pet/tree/main/docs/screenshots
-- APK 2.3.1: https://github.com/vorich8/finny-pet/releases/download/v2.3.1-demo/FinnyPet-2.3.1.apk
+- APK 2.3.1: https://github.com/vorich8/finny-pet/releases/download/v2.3.1-demo/app-release.apk
 - Страница релиза: https://github.com/vorich8/finny-pet/releases/tag/v2.3.1-demo
 
 ## Ограничения проверки
@@ -20,3 +20,4 @@
 - Часть процедурных игровых уровней пока остаётся в Kotlin.
 - Резервного демонстрационного видео в проекте не найдено.
 - Права на предоставленную пользователем иконку следует подтвердить перед публикацией в магазине.
+
