@@ -76,7 +76,7 @@ import com.finny.pet.ui.screens.VisualPrefs
         // Keep the artwork and its accessory in one bounded layer. This avoids
         // transparent-padded accessory sprites spilling into adjacent panels on
         // devices with a different density/aspect ratio (notably BlueStacks).
-        Box(Modifier.size(petSize).clipToBounds().graphicsLayer{scaleX=if(animate)breathe else 1f;scaleY=if(animate)breathe else 1f;translationY=if(animate)floatY else 0f},contentAlignment=Alignment.BottomCenter){
+        Box(Modifier.size(petSize).clip(RoundedCornerShape(1.dp)).graphicsLayer{scaleX=if(animate)breathe else 1f;scaleY=if(animate)breathe else 1f;translationY=if(animate)floatY else 0f},contentAlignment=Alignment.BottomCenter){
             Image(painterResource(drawable),"Питомец $name, стадия $stage",Modifier.fillMaxSize(),contentScale=ContentScale.Fit)
             skinId?.takeIf{it in headAccessoryIds}?.let{PetSkinOverlay(it,species,petSize)}
         }

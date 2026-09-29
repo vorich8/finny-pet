@@ -164,14 +164,16 @@ import kotlinx.coroutines.delay
         // Keep the pet inside a dedicated middle zone.  The old centered offset
         // used the full window, so on narrow/tall BlueStacks profiles the pet
         // could collide with the header or the bottom controls.
+        val availableWidth = maxWidth
+        val availableHeight = maxHeight
         Box(
             Modifier
                 .fillMaxSize()
                 .padding(top = 74.dp, bottom = 214.dp),
             contentAlignment = Alignment.Center
         ) {
-            val middleHeight = (maxHeight - 288.dp).coerceAtLeast(120.dp)
-            val safePetSize = minOf(maxWidth * .72f, middleHeight * .86f, 244.dp)
+            val middleHeight = (availableHeight - 288.dp).coerceAtLeast(120.dp)
+            val safePetSize = minOf(availableWidth * .72f, middleHeight * .86f, 244.dp)
             PetView(
                 name = name,
                 emotion = if (health < 100) "SICK" else if (hunger < 25 || water < 25 || joy < 30) "SAD" else "JOY",
