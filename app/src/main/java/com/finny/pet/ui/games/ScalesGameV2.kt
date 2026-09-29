@@ -196,7 +196,7 @@ private fun ScalePan(title: String, total: Int, sign: String, active: Boolean, t
         border = BorderStroke(3.dp, if (active) Color(0xFFFFB72E) else Color(0xFFAF864D)), shadowElevation = 6.dp) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Text("$sign $title", fontSize = 15.sp, fontWeight = FontWeight.Black, color = Color(0xFF243C64))
-            Text("$total монет", fontSize = 17.sp, fontWeight = FontWeight.Black, color = Color(0xFF243C64))
+            Text("$total P", fontSize = 17.sp, fontWeight = FontWeight.Black, color = Color(0xFF243C64))
         }
     }
 }

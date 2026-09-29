@@ -27,9 +27,11 @@ import com.finny.pet.domain.usecase.SpendResult
 import com.finny.pet.domain.usecase.GrantPassiveIncome
 import com.finny.pet.domain.usecase.BuySkin
 import com.finny.pet.domain.usecase.SaveToGoal
+import com.finny.pet.domain.usecase.WithdrawFromGoal
 import com.finny.pet.domain.usecase.AdvanceStoryDay
 import com.finny.pet.domain.GameEconomy
 import com.finny.pet.ui.games.EducationalGameCatalog
+import com.finny.pet.ui.components.headAccessoryIds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -64,17 +66,19 @@ data class BootstrapUiState(val loading:Boolean=true,val hasProfile:Boolean=fals
     }
 }
 
-data class HomeUiState(val ready:Boolean=false,val petName:String="",val coins:Int=0,val stars:Int=0,val variantId:String="",val equippedSkin:String?=null,val hunger:Int=80,val water:Int=80,val joy:Int=90,val health:Int=100,val level:Int=1,val period:Int=1,val petStage:Int=1,val suggestedGameId:String="scales",val suggestedTask:String="Весы",val suggestedLevel:Int=1)
-@HiltViewModel class HomeViewModel @Inject constructor(profiles:ProfileRepository,balances:BalanceRepository,pets:PetRepository,skins:SkinRepository,needs:PetNeedsRepository,levels:PetLevelRepository,private val progress:ProgressRepository,private val refresh:RefreshPetNeeds):ViewModel(){
-    private val petStyle=combine(pets.observe(),skins.observeAll()){pet,s->pet to s.firstOrNull{it.equipped}?.skinId}
+data class HomeUiState(val ready:Boolean=false,val petName:String="",val coins:Int=0,val stars:Int=0,val variantId:String="",val equippedSkin:String?=null,val hunger:Int=80,val water:Int=80,val joy:Int=90,val health:Int=100,val level:Int=1,val period:Int=1,val petStage:Int=1,val suggestedGameId:String="scales",val suggestedTask:String="Весы",val suggestedLevel:Int=1,val placedToys:Set<String> = emptySet())
+@HiltViewModel class HomeViewModel @Inject constructor(profiles:ProfileRepository,balances:BalanceRepository,pets:PetRepository,skins:SkinRepository,needs:PetNeedsRepository,levels:PetLevelRepository,inventory:InventoryRepository,private val progress:ProgressRepository,private val refresh:RefreshPetNeeds):ViewModel(){
+    private val petStyle=combine(pets.observe(),skins.observeAll()){pet,s->pet to s.filter{it.equipped && it.skinId !in setOf("goal_glasses","sun_scarf")}.joinToString("|"){it.skinId}.ifEmpty{null}}
     private val base=combine(profiles.observe(),balances.observe(),petStyle,needs.observe(),levels.observe()){p,b,style,n,l->
         val stars=b?.stars?:0
         val earnedLevel=when{stars>=25->6;stars>=18->5;stars>=12->4;stars>=7->3;stars>=3->2;else->1}
         HomeUiState(p!=null&&style.first!=null,p?.petName.orEmpty(),b?.coins?:0,stars,style.first?.variantId.orEmpty(),style.second,n?.food?:80,n?.water?:80,n?.mood?:90,n?.health?:100,maxOf(l?.level?:1,earnedLevel),p?.currentPeriod?:1,style.first?.stage?:1)
     }
-    val state:StateFlow<HomeUiState> = combine(base,progress.observeAll()){home,items->
+    val state:StateFlow<HomeUiState> = combine(base,progress.observeAll(),inventory.observeAll()){home,items,ownedItems->
         val values=items.associate{it.key to it.value};val min=EducationalGameCatalog.all.minOf{values["game_level_${it.id}"]?:1};val choices=EducationalGameCatalog.all.filter{(values["game_level_${it.id}"]?:1)==min};val pick=choices[(home.period-1).coerceAtLeast(0)%choices.size]
-        home.copy(suggestedGameId=pick.id,suggestedTask=pick.title,suggestedLevel=(values["game_level_${pick.id}"]?:1).coerceIn(1,10))
+        val placed=items.filter{it.key.startsWith("toy_placed_")&&it.value>0}.map{it.key.removePrefix("toy_placed_")}.toMutableSet()
+        placed.addAll(ownedItems.filter{it.category=="WANT"&&it.quantity>0}.map{it.itemId})
+        home.copy(suggestedGameId=pick.id,suggestedTask=pick.title,suggestedLevel=(values["game_level_${pick.id}"]?:1).coerceIn(1,10),placedToys=placed)
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),HomeUiState())
     private val _announcement=MutableStateFlow<String?>(null);val announcement:StateFlow<String?> = _announcement
     init {
@@ -89,27 +93,26 @@ data class WorkGameProgress(val id:String,val level:Int=1,val completed:Int=0)
     val state:StateFlow<List<WorkGameProgress>> = progress.observeAll().map{items->val values=items.associate{it.key to it.value};EducationalGameCatalog.all.map{game->WorkGameProgress(game.id,(values["game_level_${game.id}"]?:1).coerceIn(1,10),(1..10).count{values.containsKey("result_${game.id}_$it")})}}.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),EducationalGameCatalog.all.map{WorkGameProgress(it.id)})
 }
 
-data class InventoryUiState(val items:List<InventoryEntity> = emptyList(),val skins:List<com.finny.pet.data.database.SkinOwnershipEntity> = emptyList(),val needs:PetNeedsEntity=PetNeedsEntity(),val message:String?=null)
-@HiltViewModel class InventoryViewModel @Inject constructor(private val inventory:InventoryRepository,skins:SkinRepository,needs:PetNeedsRepository,private val useItem:UseInventoryItem,private val skinRepository:SkinRepository):ViewModel(){
+data class InventoryUiState(val items:List<InventoryEntity> = emptyList(),val skins:List<com.finny.pet.data.database.SkinOwnershipEntity> = emptyList(),val needs:PetNeedsEntity=PetNeedsEntity(),val message:String?=null,val placed:Set<String> = emptySet())
+@HiltViewModel class InventoryViewModel @Inject constructor(private val inventory:InventoryRepository,skins:SkinRepository,needs:PetNeedsRepository,private val useItem:UseInventoryItem,private val skinRepository:SkinRepository,private val progress:ProgressRepository):ViewModel(){
     private val message=MutableStateFlow<String?>(null)
-    val state=combine(inventory.observeAll(),skins.observeAll(),needs.observe(),message){items,s,n,m->InventoryUiState(items,s,n?:PetNeedsEntity(),m)}.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),InventoryUiState())
+    val state=combine(inventory.observeAll(),skins.observeAll(),needs.observe(),message,progress.observeAll()){items,s,n,m,p->InventoryUiState(items,s,n?:PetNeedsEntity(),m,p.filter{it.key.startsWith("toy_placed_")&&it.value>0}.map{it.key.removePrefix("toy_placed_")}.toSet())}.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),InventoryUiState())
     fun use(id:String)=viewModelScope.launch{val item=inventory.get(id);message.value=if(useItem(id))when(item?.category){"FOOD"->"${item.title}: питомец поел, шкала еды выросла.";"WATER"->"${item.title}: питомец попил, шкала воды выросла.";"MEDICINE"->"Лекарство помогло: здоровье восстановлено.";else->"Предмет использован."} else "Сейчас «${item?.title?:"этот предмет"}» не нужен — он останется в рюкзаке."}
     fun clear(){message.value=null}
+    fun togglePlacement(id:String)=viewModelScope.launch{val key="toy_placed_$id";val current=progress.get(key)?.value?:0;progress.save(ProgressEntity(key,if(current>0)0 else 1));message.value=if(current>0)"Игрушка убрана в рюкзак." else "Игрушка появилась дома рядом с питомцем."}
     fun equip(skin:com.finny.pet.data.database.SkinOwnershipEntity)=viewModelScope.launch{
-        if(skin.equipped) skinRepository.unequipAll()
-        else {
-            val current=skinRepository.getEquipped()
-            if(current!=null && current.skinId!=skin.skinId) message.value="Сначала сними «${accessoryTitle(current)}»: в слоте головного убора уже есть аксессуар."
-            else skinRepository.equip(skin)
-        }
+        val head=skin.skinId in headAccessoryIds
+        skinRepository.observeAll().first().filter{it.equipped&&((it.skinId in headAccessoryIds)==head)}.forEach{skinRepository.unequip(it)}
+        if(!skin.equipped)skinRepository.equip(skin)
     }
 }
 
-data class StoreUiState(val message:String?=null,val pending:CityGood?=null)
+data class StoreUiState(val message:String?=null,val pending:CityGood?=null,val owned:Set<String> = emptySet())
 data class CityGood(val id:String,val icon:String,val title:String,val category:String,val price:Int)
-@HiltViewModel class CityStoreViewModel @Inject constructor(private val purchase:CityPurchase,private val balances:BalanceRepository):ViewModel(){
+@HiltViewModel class CityStoreViewModel @Inject constructor(private val purchase:CityPurchase,private val balances:BalanceRepository,inventory:InventoryRepository):ViewModel(){
     private val _state=MutableStateFlow(StoreUiState());val state:StateFlow<StoreUiState> = _state
-    fun buy(g:CityGood,confirmed:Boolean=false)=viewModelScope.launch{when(purchase(g.id,g.title,g.category,g.price,confirmed)){SpendResult.SUCCESS->_state.value=StoreUiState("Покупка в рюкзаке!");SpendResult.NOT_ENOUGH->{val have=balances.get()?.coins?:0;_state.value=StoreUiState("«${g.title}» стоит ${g.price} ₽. У тебя $have; не хватает ${(g.price-have).coerceAtLeast(0)}. Выполни задание в одном из зданий и возвращайся.")};SpendResult.NEED_CONFIRMATION->_state.value=StoreUiState(pending=g)}}
+    init{viewModelScope.launch{inventory.observeAll().collect{items->_state.update{it.copy(owned=items.filter{item->item.category=="WANT"&&item.quantity>0}.map{item->item.itemId}.toSet())}}}}
+    fun buy(g:CityGood,confirmed:Boolean=false)=viewModelScope.launch{when(purchase(g.id,g.title,g.category,g.price,confirmed)){SpendResult.SUCCESS->_state.value=StoreUiState("Покупка в рюкзаке!");SpendResult.NOT_ENOUGH->{val have=balances.get()?.coins?:0;_state.value=StoreUiState("«${g.title}» стоит ${g.price} P. У тебя $have; не хватает ${(g.price-have).coerceAtLeast(0)}. Выполни задание в одном из зданий и возвращайся.")};SpendResult.NEED_CONFIRMATION->_state.value=StoreUiState(pending=g)}}
     fun clear() {_state.value=StoreUiState()}
 }
 
@@ -118,17 +121,22 @@ data class SkinShopUiState(val owned:List<com.finny.pet.data.database.SkinOwners
 @HiltViewModel class SkinShopViewModel @Inject constructor(skins:SkinRepository,private val buySkin:BuySkin,private val skinRepository:SkinRepository):ViewModel(){
     private val feedback=MutableStateFlow<Pair<String?,SkinGood?>>(null to null)
     val state=combine(skins.observeAll(),feedback){owned,f->SkinShopUiState(owned,f.first,f.second)}.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),SkinShopUiState())
-    fun buy(g:SkinGood,confirmed:Boolean=false)=viewModelScope.launch{when(buySkin(g.id,g.title,g.price,confirmed)){SpendResult.SUCCESS->feedback.value="Скин добавлен в гардероб!" to null;SpendResult.NOT_ENOUGH->feedback.value="Рублей пока не хватает. Выполни задание и возвращайся." to null;SpendResult.NEED_CONFIRMATION->feedback.value=null to g}}
-    fun equip(g:SkinGood)=viewModelScope.launch{skinRepository.get(g.id)?.let{skin->if(skin.equipped)skinRepository.unequipAll() else {val current=skinRepository.getEquipped();if(current!=null&&current.skinId!=skin.skinId)feedback.value="Сначала сними «${accessoryTitle(current)}»: в слоте головного убора уже есть аксессуар." to null else skinRepository.equip(skin)}}}
+    fun buy(g:SkinGood,confirmed:Boolean=false)=viewModelScope.launch{when(buySkin(g.id,g.title,g.price,confirmed)){SpendResult.SUCCESS->feedback.value="Скин добавлен в гардероб!" to null;SpendResult.NOT_ENOUGH->feedback.value="пари пока не хватает. Выполни задание и возвращайся." to null;SpendResult.NEED_CONFIRMATION->feedback.value=null to g}}
+    fun equip(g:SkinGood)=viewModelScope.launch{skinRepository.get(g.id)?.let{skin->val head=skin.skinId in headAccessoryIds;skinRepository.observeAll().first().filter{it.equipped&&((it.skinId in headAccessoryIds)==head)}.forEach{skinRepository.unequip(it)};if(!skin.equipped)skinRepository.equip(skin)}}
     fun clear(){feedback.value=null to null}
 }
 
-data class GoalsUiState(val goals:List<com.finny.pet.data.database.GoalEntity> = emptyList(),val coins:Int=0,val message:String?=null)
-@HiltViewModel class GoalsViewModel @Inject constructor(private val goals:GoalRepository,private val balances:BalanceRepository,private val save:SaveToGoal,private val skins:SkinRepository):ViewModel(){
+data class GoalsUiState(val goals:List<com.finny.pet.data.database.GoalEntity> = emptyList(),val coins:Int=0,val message:String?=null,val withdrawPending:String?=null)
+@HiltViewModel class GoalsViewModel @Inject constructor(private val goals:GoalRepository,private val balances:BalanceRepository,private val save:SaveToGoal,private val skins:SkinRepository,private val withdraw:WithdrawFromGoal):ViewModel(){
     private val message=MutableStateFlow<String?>(null)
     val state=combine(goals.observeAll(),balances.observe(),message){g,b,m->GoalsUiState(g,b?.coins?:0,m)}.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),GoalsUiState())
-    init{viewModelScope.launch{listOf(com.finny.pet.data.database.GoalEntity("goal_first","Первая мечта",60,active=true),com.finny.pet.data.database.GoalEntity("goal_home","Уютный домик",140,active=true),com.finny.pet.data.database.GoalEntity("goal_adventure","Большое приключение",240,active=true)).forEach{if(goals.get(it.id)==null)goals.save(it)}}}
-    fun add(id:String,amount:Int)=viewModelScope.launch{val have=balances.get()?.coins?:0;val before=goals.get(id);val remaining=((before?.cost?:0)-(before?.saved?:0)).coerceAtLeast(0);if(amount>remaining){message.value="До цели осталось $remaining ₽. Выбери сумму не больше остатка."}else if(save(id,amount)){val goal=goals.get(id);val reward=when(id){"goal_first"->Triple("goal_hat","Звёздная шапка","шапка");"goal_home"->Triple("goal_glasses","Очки планировщика","очки");else->Triple("goal_crown","Корона мечты","корона")};if(goal?.completed==true&&skins.get(reward.first)?.owned!=true)skins.save(com.finny.pet.data.database.SkinOwnershipEntity(reward.first,reward.second,owned=true));message.value=if(goal?.completed==true)"Цель достигнута! Эксклюзивный аксессуар «${reward.second}» добавлен в гардероб. Купить его в магазине нельзя." else "Отложено $amount ₽. Ещё немного ближе к цели!"}else message.value="Ты выбрал $amount ₽, но свободно только $have. Не хватает ${(amount-have).coerceAtLeast(0)} ₽."}
+    init{viewModelScope.launch{listOf(com.finny.pet.data.database.GoalEntity("goal_first","Первая мечта",60,active=true),com.finny.pet.data.database.GoalEntity("goal_home","Уютный домик",140,active=false),com.finny.pet.data.database.GoalEntity("goal_adventure","Большое приключение",240,active=false)).forEach{if(goals.get(it.id)==null)goals.save(it)}}}
+    fun add(id:String,amount:Int)=viewModelScope.launch{val have=balances.get()?.coins?:0;val before=goals.get(id);val remaining=((before?.cost?:0)-(before?.saved?:0)).coerceAtLeast(0);if(amount>remaining){message.value="До цели осталось $remaining P. Выбери сумму не больше остатка."}else if(save(id,amount)){val goal=goals.get(id);val reward=when(id){"goal_first"->Triple("","Первая цель завершена","");"goal_home"->Triple("","Новая ступень питомца","");else->Triple("goal_crown","Корона мечты","корона")};if(goal?.completed==true&&reward.first.isNotEmpty()&&skins.get(reward.first)?.owned!=true)skins.save(com.finny.pet.data.database.SkinOwnershipEntity(reward.first,reward.second,owned=true));message.value=if(goal?.completed==true)"Цель достигнута! ${if(reward.first.isNotEmpty())"Эксклюзивный аксессуар «${reward.second}» добавлен в гардероб." else "Питомец перешёл на новую ступень."}" else "Отложено $amount P. Ещё немного ближе к цели!"}else message.value="Ты выбрал $amount P, но свободно только $have. Не хватает ${(amount-have).coerceAtLeast(0)} P."}
+    private val withdrawPending=MutableStateFlow<String?>(null)
+    val withdrawal:StateFlow<String?> = withdrawPending.asStateFlow()
+    fun requestWithdraw(id:String){withdrawPending.value=id}
+    fun confirmWithdraw(){val id=withdrawPending.value ?: return;viewModelScope.launch{if(withdraw(id))message.value="Накопления возвращены в баланс.";withdrawPending.value=null}}
+    fun cancelWithdraw(){withdrawPending.value=null}
     fun clear(){message.value=null}
 }
 
@@ -137,10 +145,24 @@ data class StoryUiState(val day:Int=1,val earned:Int=0,val spent:Int=0,val saved
     val savingDone:Boolean get()=saved>0||goalCompleted
     val ready:Boolean get()=earned>=target&&cared&&savingDone
 }
+
+data class BudgetPlanState(val budget:Int=0,val required:Int=0,val wants:Int=0,val saving:Int=0,val confirmed:Boolean=false,val actualRequired:Int=0,val actualWants:Int=0,val actualSaving:Int=0,val message:String?=null){
+    val planned:Int get()=required+wants+saving
+    val remaining:Int get()=(budget-planned).coerceAtLeast(0)
+}
+@HiltViewModel class BudgetPlanViewModel @Inject constructor(private val progress:ProgressRepository,balances:BalanceRepository):ViewModel(){
+    private val message=MutableStateFlow<String?>(null)
+    val state=combine(progress.observeAll(),balances.observe(),message){items,b,m->
+        val p=items.associate{it.key to it.value};BudgetPlanState(budget=b?.coins?:0,required=p["plan_required"]?:0,wants=p["plan_wants"]?:0,saving=p["plan_saving"]?:0,confirmed=(p["plan_confirmed"]?:0)>0,actualRequired=p["day_required_spent"]?:0,actualWants=p["day_want_spent"]?:0,actualSaving=p["day_saved"]?:0,message=m)
+    }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),BudgetPlanState())
+    fun set(kind:String,value:Int){val key=when(kind){"required"->"plan_required";"wants"->"plan_wants";else->"plan_saving"};viewModelScope.launch{progress.save(ProgressEntity(key,value.coerceAtLeast(0)));progress.save(ProgressEntity("plan_confirmed",0))}}
+    fun confirm(){val s=state.value;if(s.planned>s.budget){message.value="План превышает доступный бюджет на ${s.planned-s.budget} P. Уменьши одну из категорий."}else viewModelScope.launch{progress.save(ProgressEntity("plan_confirmed",1));message.value="План подтверждён. После периода сравним его с фактом."}}
+    fun clear(){message.value=null}
+}
 @HiltViewModel class StoryViewModel @Inject constructor(profiles:ProfileRepository,progress:ProgressRepository,goals:GoalRepository,private val advance:AdvanceStoryDay):ViewModel(){
     private val message=MutableStateFlow<String?>(null)
     val state=combine(profiles.observe(),progress.observeAll(),goals.observeAll(),message){profile,items,goalItems,msg->val p=items.associate{it.key to it.value};StoryUiState(profile?.currentPeriod?:1,p["day_earned"]?:0,p["day_spent"]?:0,p["day_saved"]?:0,(p["day_care"]?:0)>0,p["week_earned"]?:0,p["week_saved"]?:0,goalItems.any{it.active&&it.completed},msg)}.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),StoryUiState())
-    fun check(onReady:()->Unit){val s=state.value;if(s.ready)onReady() else message.value=buildString{append("До итогов дня осталось: ");val missing=mutableListOf<String>();if(s.earned<s.target)missing+="заработать ещё ${s.target-s.earned} ₽";if(!s.cared)missing+="купить полезный корм для питомца";if(!s.savingDone)missing+="сделать вклад в цель";append(missing.joinToString(", "))}.replaceFirstChar{it.uppercase()}}
+    fun check(onReady:()->Unit){val s=state.value;if(s.ready)onReady() else message.value=buildString{append("До итогов дня осталось: ");val missing=mutableListOf<String>();if(s.earned<s.target)missing+="заработать ещё ${s.target-s.earned} P";if(!s.cared)missing+="купить полезный корм для питомца";if(!s.savingDone)missing+="сделать вклад в цель";append(missing.joinToString(", "))}.replaceFirstChar{it.uppercase()}}
     private var advancing=false
     fun next(onNext:(Boolean)->Unit){if(advancing)return;advancing=true;viewModelScope.launch{val old=state.value.day;advance();onNext(old>=5)}}
     fun clear(){message.value=null}

@@ -17,8 +17,8 @@ class CreateProfile @Inject constructor(private val profiles: ProfileRepository,
         (1..5).forEach { periods.save(PeriodEntity(it, unlocked = it == 1)) }
         listOf(
             GoalEntity("goal_first","Первая мечта",60,active=true),
-            GoalEntity("goal_home","Уютный домик",140,active=true),
-            GoalEntity("goal_adventure","Большое приключение",240,active=true)
+            GoalEntity("goal_home","Уютный домик",140,active=false),
+            GoalEntity("goal_adventure","Большое приключение",240,active=false)
         ).forEach { goals.save(it) }
         progress.save(ProgressEntity("story_day",1))
         progress.save(ProgressEntity("next_illness_minute",(System.currentTimeMillis()/60_000L).toInt()+Random.nextInt(360,721)))
@@ -51,11 +51,10 @@ class EnableDeveloperMode @Inject constructor(
         ).forEach { goals.save(it) }
         listOf(
             SkinOwnershipEntity("goal_hat", "Звёздная шапка", owned = true),
-            SkinOwnershipEntity("goal_glasses", "Очки планировщика", owned = true),
             SkinOwnershipEntity("goal_crown", "Корона мечты", owned = true)
         ).forEach { skins.save(it) }
-        // Only objects that have a visible room representation are seeded.
-        inventory.save(InventoryEntity("ball", "Весёлый мяч", "WANT", 1))
+        // Игрушки пока не доступны в приложении, поэтому демо-профиль не получает их.
+        inventory.clear()
         needs.save(PetNeedsEntity(food = 100, water = 100, health = 100, mood = 100))
         listOf("scales", "priorities", "shopping_list", "friend_week", "piggy", "goal", "secret_box", "shop", "change", "expense_race", "traffic", "compare_prices").forEach { id ->
             progress.save(ProgressEntity("game_level_$id", 10))
@@ -100,11 +99,16 @@ class CityPurchase @Inject constructor(private val db:AppDatabase,private val ba
     suspend operator fun invoke(itemId:String,title:String,category:String,price:Int,confirmed:Boolean=false):SpendResult=db.withTransaction{
         val balance=balances.get() ?: BalanceEntity()
         if(price<=0)return@withTransaction SpendResult.NOT_ENOUGH
+        val previous=inventory.get(itemId)
+        if(category=="WANT" && (previous?.quantity?:0)>0)return@withTransaction SpendResult.NOT_ENOUGH
         if(balance.coins<price)return@withTransaction SpendResult.NOT_ENOUGH
-        if(!confirmed && category=="WANT" && balance.coins-price<20)return@withTransaction SpendResult.NEED_CONFIRMATION
+        if(!confirmed)return@withTransaction SpendResult.NEED_CONFIRMATION
         balances.save(balance.copy(coins=balance.coins-price));val old=inventory.get(itemId)
-        inventory.save(InventoryEntity(itemId,title,category,(old?.quantity?:0)+1));wallet.add(WalletTransactionEntity(amount=-price,reason="Покупка: $title"))
+        inventory.save(InventoryEntity(itemId,title,category,if(category=="WANT")1 else (old?.quantity?:0)+1));wallet.add(WalletTransactionEntity(amount=-price,reason="Покупка: $title"))
+        if(category=="WANT") progress.save(ProgressEntity("toy_placed_$itemId",1))
         progress.save(ProgressEntity("day_spent",(progress.get("day_spent")?.value?:0)+price))
+        val actualKey=if(category=="WANT") "day_want_spent" else "day_required_spent"
+        progress.save(ProgressEntity(actualKey,(progress.get(actualKey)?.value?:0)+price))
         if(category=="FOOD")progress.save(ProgressEntity("day_care",1))
         val currentNeeds=needs.get() ?: PetNeedsEntity()
         val moodBoost=when(category){"WANT"->8;"FOOD","WATER"->3;else->0}
@@ -132,8 +136,25 @@ class SaveToGoal @Inject constructor(private val db:AppDatabase,private val goal
     suspend operator fun invoke(id:String, amount:Int):Boolean = db.withTransaction {
         val balance=balances.get() ?: return@withTransaction false; val goal=goals.get(id) ?: return@withTransaction false
         if(amount<=0||goal.completed||amount>goal.cost-goal.saved||!BalanceCalculator.canSpend(balance.coins,amount)) return@withTransaction false
-        balances.save(balance.copy(coins=balance.coins-amount)); goals.save(goal.copy(saved=goal.saved+amount, completed=goal.saved+amount>=goal.cost))
+        val completed=goal.saved+amount>=goal.cost
+        balances.save(balance.copy(coins=balance.coins-amount)); goals.save(goal.copy(saved=goal.saved+amount, completed=completed, active=!completed))
+        if(completed){
+            val next=when(id){"goal_first"->"goal_home";"goal_home"->"goal_adventure";else->null}
+            next?.let{goals.get(it)?.let{following->if(!following.completed)goals.save(following.copy(active=true))}}
+        }
         progress.save(ProgressEntity("day_saved",(progress.get("day_saved")?.value?:0)+amount));progress.save(ProgressEntity("week_saved",(progress.get("week_saved")?.value?:0)+amount));true
+    }
+}
+
+class WithdrawFromGoal @Inject constructor(private val db:AppDatabase,private val goals:GoalRepository,private val balances:BalanceRepository) {
+    suspend operator fun invoke(id:String):Boolean = db.withTransaction {
+        val goal=goals.get(id) ?: return@withTransaction false
+        val amount=goal.saved
+        if(amount<=0 || goal.completed)return@withTransaction false
+        val balance=balances.get() ?: BalanceEntity()
+        balances.save(balance.copy(coins=balance.coins+amount))
+        goals.save(goal.copy(saved=0,active=true))
+        true
     }
 }
 
@@ -149,7 +170,7 @@ class AdvanceStoryDay @Inject constructor(private val profiles:ProfileRepository
         val next=(day+1).coerceAtMost(5)
         if(day<5){periods.save(PeriodEntity(next,true,false));profiles.save(profile.copy(currentPeriod=next))}
         val pet=pets.get();if(pet!=null)pets.save(pet.copy(stage=when{next>=5->3;next>=2->2;else->1}))
-        listOf("day_earned","day_spent","day_saved","day_care").forEach{progress.save(ProgressEntity(it,0))}
+        listOf("day_earned","day_spent","day_saved","day_care","day_required_spent","day_want_spent","plan_required","plan_wants","plan_saving","plan_confirmed").forEach{progress.save(ProgressEntity(it,0))}
         return next
     }
 }
@@ -169,16 +190,17 @@ class GrantPassiveIncome @Inject constructor(private val balances:BalanceReposit
     }
 }
 
-class BuySkin @Inject constructor(private val db:AppDatabase,private val balances:BalanceRepository,private val skins:SkinRepository,private val wallet:WalletRepository){
+class BuySkin @Inject constructor(private val db:AppDatabase,private val balances:BalanceRepository,private val skins:SkinRepository,private val wallet:WalletRepository,private val progress:ProgressRepository){
     suspend operator fun invoke(id:String,title:String,price:Int,confirmed:Boolean=false):SpendResult = db.withTransaction {
         if(skins.get(id)?.owned==true)return@withTransaction SpendResult.SUCCESS
         val balance=balances.get()?:BalanceEntity()
         if(price<=0)return@withTransaction SpendResult.NOT_ENOUGH
         if(balance.coins<price)return@withTransaction SpendResult.NOT_ENOUGH
-        if(!confirmed&&balance.coins-price<20)return@withTransaction SpendResult.NEED_CONFIRMATION
+        if(!confirmed)return@withTransaction SpendResult.NEED_CONFIRMATION
         balances.save(balance.copy(coins=balance.coins-price))
         skins.save(SkinOwnershipEntity(id,title,owned=true))
         wallet.add(WalletTransactionEntity(amount=-price,reason="Скин: $title"))
+        progress.save(ProgressEntity("day_want_spent",(progress.get("day_want_spent")?.value?:0)+price))
         SpendResult.SUCCESS
     }
 }

@@ -3,6 +3,7 @@ package com.finny.pet.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -81,7 +84,7 @@ import com.finny.pet.ui.screens.VisualPrefs
         // devices with a different density/aspect ratio (notably BlueStacks).
         Box(Modifier.size(petSize).offset(y=petSize*baselineDrop).clip(RoundedCornerShape(1.dp)).graphicsLayer{scaleX=if(animate)breathe else 1f;scaleY=if(animate)breathe else 1f;translationY=if(animate)floatY else 0f},contentAlignment=Alignment.BottomCenter){
             Image(painterResource(drawable),"Питомец $name, стадия $stage",Modifier.fillMaxSize(),contentScale=ContentScale.Fit)
-            skinId?.takeIf{it in headAccessoryIds}?.let{PetSkinOverlay(it,species,petSize)}
+            skinId?.split('|')?.forEach{if(it.isNotBlank())PetSkinOverlay(it,species,petSize)}
         }
         if(showLabels){ Text(name,fontSize=24.sp,fontWeight=FontWeight.Bold); Text(if(emotion.equals("SICK",true))"Мне нужно лекарство" else if(isSad)"Нужна забота" else emotion,fontSize=16.sp,color=FinnyInk) }
     }
@@ -93,10 +96,25 @@ private fun skinDrawable(skinId:String)=when(skinId){
     else->R.drawable.skin_wisdom_crown
 }
 
-val headAccessoryIds=setOf("hat_saver","glasses_smart","crown_wise","weekly_winter","goal_hat","goal_glasses","goal_crown")
+val headAccessoryIds=setOf("hat_saver","glasses_smart","weekly_winter","goal_hat","goal_crown","flower_bow","bowtie")
 
 @Composable fun SkinArtwork(skinId:String,modifier:Modifier=Modifier){
-    Image(painterResource(skinDrawable(skinId)),skinId,modifier,contentScale=ContentScale.Fit)
+    if(skinId.startsWith("sweater_" )||skinId=="flower_bow"||skinId=="bowtie")WearableArtwork(skinId,modifier)
+    else Image(painterResource(skinDrawable(skinId)),skinId,modifier,contentScale=ContentScale.Fit)
+}
+
+@Composable private fun WearableArtwork(id:String,modifier:Modifier=Modifier){
+    Canvas(modifier){val w=size.width;val h=size.height;val color=when(id){"sweater_mint"->Color(0xFF45B99A);"sweater_coral"->Color(0xFFEE7E72);"flower_bow"->Color(0xFFFF79AA);else->Color(0xFF8057C8)}
+        if(id.startsWith("sweater_")){
+            val body=androidx.compose.ui.graphics.Path().apply{moveTo(w*.22f,h*.28f);quadraticTo(w*.5f,h*.12f,w*.78f,h*.28f);lineTo(w*.9f,h*.84f);quadraticTo(w*.5f,h*.99f,w*.1f,h*.84f);close()}
+            drawPath(body,color);drawRoundRect(color.copy(alpha=.86f),androidx.compose.ui.geometry.Offset(w*.02f,h*.30f),androidx.compose.ui.geometry.Size(w*.25f,h*.42f),androidx.compose.ui.geometry.CornerRadius(w*.10f));drawRoundRect(color.copy(alpha=.86f),androidx.compose.ui.geometry.Offset(w*.73f,h*.30f),androidx.compose.ui.geometry.Size(w*.25f,h*.42f),androidx.compose.ui.geometry.CornerRadius(w*.10f));drawRoundRect(Color.White.copy(alpha=.9f),androidx.compose.ui.geometry.Offset(w*.24f,h*.78f),androidx.compose.ui.geometry.Size(w*.52f,h*.08f),androidx.compose.ui.geometry.CornerRadius(w*.04f))
+            val accent=if(id=="sweater_mint")Color(0xFFFFE27A) else Color(0xFFFFF1CF);drawCircle(accent,w*.055f,androidx.compose.ui.geometry.Offset(w*.5f,h*.48f));drawCircle(accent,w*.055f,androidx.compose.ui.geometry.Offset(w*.5f,h*.63f))
+        }else if(id=="flower_bow"){
+            for(i in 0..4){val a=i*Math.PI*2/5;drawCircle(color,w*.19f,androidx.compose.ui.geometry.Offset(w*.5f+(kotlin.math.cos(a)*w*.2).toFloat(),h*.48f+(kotlin.math.sin(a)*h*.2).toFloat()))};drawCircle(Color(0xFFFFD75D),w*.105f,androidx.compose.ui.geometry.Offset(w*.5f,h*.48f))
+        }else{
+            drawRoundRect(color,androidx.compose.ui.geometry.Offset(w*.08f,h*.2f),androidx.compose.ui.geometry.Size(w*.84f,h*.62f),androidx.compose.ui.geometry.CornerRadius(w*.15f));val p=androidx.compose.ui.graphics.Path().apply{moveTo(w*.5f,h*.34f);lineTo(w*.3f,h*.14f);lineTo(w*.22f,h*.28f);lineTo(w*.42f,h*.45f);lineTo(w*.5f,h*.38f);lineTo(w*.58f,h*.45f);lineTo(w*.78f,h*.28f);lineTo(w*.7f,h*.14f);close()};drawPath(p,Color(0xFFFFD75D))
+        }
+    }
 }
 
 @Composable fun MedicineArtwork(kind:String="bottle",modifier:Modifier=Modifier){
@@ -113,17 +131,43 @@ val headAccessoryIds=setOf("hat_saver","glasses_smart","crown_wise","weekly_wint
     else Text(fallback,fontSize=(size.value*.62f).sp)
 }
 
+@Composable fun ToyArtwork(id:String,modifier:Modifier=Modifier){
+    Canvas(modifier){
+        val w=size.width; val h=size.height
+        when(id){
+            "ball"->{
+                drawCircle(Color(0xFF4B8EDB),minOf(w,h)*.43f,center=androidx.compose.ui.geometry.Offset(w/2f,h/2f))
+                drawArc(color=Color(0xFFF4F7FA),startAngle=-55f,sweepAngle=28f,useCenter=false,topLeft=androidx.compose.ui.geometry.Offset(0f,h*.08f),size=androidx.compose.ui.geometry.Size(w,h*.84f),style=Stroke(width=minOf(w,h)*.12f))
+                drawArc(color=Color(0xFFF4F7FA),startAngle=125f,sweepAngle=27f,useCenter=false,topLeft=androidx.compose.ui.geometry.Offset(w*.1f,h*.03f),size=androidx.compose.ui.geometry.Size(w*.8f,h*.94f),style=Stroke(width=minOf(w,h)*.11f))
+                drawCircle(Color.White.copy(alpha=.4f),minOf(w,h)*.08f,androidx.compose.ui.geometry.Offset(w*.34f,h*.28f))
+            }
+            "feeder"->{
+                drawRoundRect(Color(0xFFE6A64B),androidx.compose.ui.geometry.Offset(w*.14f,h*.35f),androidx.compose.ui.geometry.Size(w*.72f,h*.38f),androidx.compose.ui.geometry.CornerRadius(w*.1f))
+                drawOval(color=Color(0xFFFFD989),topLeft=androidx.compose.ui.geometry.Offset(w*.1f,h*.23f),size=androidx.compose.ui.geometry.Size(w*.8f,h*.29f));drawOval(color=Color(0xFF8B5A31),topLeft=androidx.compose.ui.geometry.Offset(w*.2f,h*.31f),size=androidx.compose.ui.geometry.Size(w*.6f,h*.17f))
+                drawRoundRect(Color(0xFF9B6331),androidx.compose.ui.geometry.Offset(w*.2f,h*.7f),androidx.compose.ui.geometry.Size(w*.12f,h*.2f),androidx.compose.ui.geometry.CornerRadius(w*.04f));drawRoundRect(Color(0xFF9B6331),androidx.compose.ui.geometry.Offset(w*.68f,h*.7f),androidx.compose.ui.geometry.Size(w*.12f,h*.2f),androidx.compose.ui.geometry.CornerRadius(w*.04f))
+            }
+            else->{
+                drawRoundRect(Color(0xFFF1A24A),androidx.compose.ui.geometry.Offset(w*.12f,h*.42f),androidx.compose.ui.geometry.Size(w*.76f,h*.42f),androidx.compose.ui.geometry.CornerRadius(w*.06f));drawRoundRect(Color(0xFF5AA7D9),androidx.compose.ui.geometry.Offset(w*.22f,h*.2f),androidx.compose.ui.geometry.Size(w*.56f,h*.3f),androidx.compose.ui.geometry.CornerRadius(w*.06f));drawRoundRect(Color(0xFFE86E73),androidx.compose.ui.geometry.Offset(w*.35f,h*.05f),androidx.compose.ui.geometry.Size(w*.3f,h*.22f),androidx.compose.ui.geometry.CornerRadius(w*.04f))
+            }
+        }
+    }
+}
+
 @Composable private fun BoxScope.PetSkinOverlay(skinId:String,species:String,petSize:Dp){
     val (widthFactor,heightFactor,yFactor)=when(skinId){
         "hat_saver","weekly_winter","goal_hat"->when(species){
-            "rabbit"->Triple(.34f,.29f,.16f)
-            "squirrel"->Triple(.34f,.29f,.11f)
-            "hamster"->Triple(.31f,.26f,.00f)
-            "axolotl"->Triple(.32f,.27f,.10f)
-            "dragon"->Triple(.31f,.26f,.08f)
-            else->Triple(.34f,.29f,.07f)
+            "rabbit"->Triple(.29f,.21f,.12f)
+            "squirrel"->Triple(.29f,.21f,.09f)
+            "hamster"->Triple(.28f,.20f,.02f)
+            "axolotl"->Triple(.29f,.21f,.08f)
+            "dragon"->Triple(.28f,.20f,.07f)
+            else->Triple(.29f,.21f,.07f)
         }
-        "glasses_smart","goal_glasses"->Triple(.38f,.19f,when(species){"rabbit"->.40f;"squirrel"->.38f;"hamster"->.22f;"axolotl"->.35f;"dragon"->.32f;else->.35f})
+        "glasses_smart","goal_glasses"->Triple(.30f,.14f,when(species){"rabbit"->.32f;"squirrel"->.30f;"hamster"->.18f;"axolotl"->.29f;"dragon"->.27f;else->.29f})
+        "sweater_mint","sweater_coral"->Triple(.55f,.38f,.49f)
+        "flower_bow"->Triple(.18f,.15f,when(species){"rabbit"->.12f;"squirrel"->.10f;else->.07f})
+        "bowtie"->Triple(.19f,.16f,.48f)
+        "sun_scarf"->Triple(.42f,.27f,.37f)
         else->when(species){
             "rabbit"->Triple(.27f,.19f,.21f)
             "squirrel"->Triple(.27f,.19f,.15f)
@@ -160,9 +204,14 @@ val headAccessoryIds=setOf("hat_saver","glasses_smart","crown_wise","weekly_wint
     }
 }
 @Composable fun RubleIcon(modifier:Modifier=Modifier){
-    Surface(modifier,shape=CircleShape,color=Color(0xFFFFC53D),border=BorderStroke(2.dp,Color(0xFFFFE99A)),shadowElevation=2.dp){
-        Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){Text("₽",fontSize=15.sp,fontWeight=FontWeight.Black,color=Color(0xFF805000))}
-    }
+    BoxWithConstraints(modifier,contentAlignment=Alignment.Center){Canvas(Modifier.fillMaxSize()){
+        val r=size.minDimension/2f
+        drawCircle(Color(0xFF9E641F),r)
+        drawCircle(Color(0xFFD99635),r*.91f)
+        drawCircle(Color(0xFFFFD776),r*.78f)
+        drawCircle(Color(0xFFB87925),r*.68f,style=Stroke(width=r*.055f))
+        drawCircle(Color.White.copy(alpha=.32f),r*.60f,center=androidx.compose.ui.geometry.Offset(size.width*.37f,size.height*.32f),style=Stroke(width=r*.08f))
+    };Text("P",fontSize=(maxWidth.value*.54f).sp,fontWeight=FontWeight.Black,color=Color(0xFF774813))}
 }
 @Composable fun FinnyProgressTrack(progress:Float, modifier:Modifier=Modifier, color:Color=FinnyBlue, trackColor:Color=Color(0xFFE4E9F3), height:Dp=10.dp) {
     val safe=progress.coerceIn(0f,1f)

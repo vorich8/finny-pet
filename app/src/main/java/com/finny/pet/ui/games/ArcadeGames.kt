@@ -53,7 +53,7 @@ class ArcadeViewModel @Inject constructor(private val earn:EarnArcadeReward):Vie
     val accent=when(kind){"snake"->Color(0xFF1D9A64);"rocket"->Color(0xFFD64D87);"pairs"->Color(0xFFCF841B);"catch"->Color(0xFF8056C7);"jumper"->Color(0xFF148E87);else->Color(0xFF2F83B8)}
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF120927),Color(0xFF37205E),Color(0xFF080E22))))){
         Column(Modifier.fillMaxSize().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(9.dp)){
-            PremiumGameHeader(title,"Игровой зал • награда ${GameEconomy.arcadeReward} монет",1,accent,icon,onBack,"АРКАДА")
+            PremiumGameHeader(title,"Игровой зал • награда ${GameEconomy.arcadeReward} P",1,accent,icon,onBack,"АРКАДА")
             when(kind){
                 "snake"->SnakeGame{vm.finish("Змейка",onDone)}
                 "rocket"->RocketGame{vm.finish("Ракета",onDone)}
@@ -81,7 +81,7 @@ private val arcadeCabinets=listOf(
         Row(Modifier.fillMaxWidth().padding(horizontal=15.dp),verticalAlignment=Alignment.CenterVertically){
             Surface(Modifier.weight(1f),shape=CircleShape,color=Color(0xFFA855F7)){Text("🕹  ИГРОВОЙ ЗАЛ",Modifier.fillMaxWidth().padding(horizontal=14.dp,vertical=8.dp),fontWeight=FontWeight.Black,color=Color.White,maxLines=1,overflow=TextOverflow.Ellipsis)}
             Spacer(Modifier.width(8.dp))
-            Surface(shape=CircleShape,color=Color(0xFFF59E0B),border=BorderStroke(2.dp,Color(0xFFFEF08A))){Text("◎ +${GameEconomy.arcadeReward}",Modifier.padding(horizontal=12.dp,vertical=7.dp),fontWeight=FontWeight.Black,color=Color.White)}
+            Surface(shape=CircleShape,color=Color(0xFFF59E0B),border=BorderStroke(2.dp,Color(0xFFFEF08A))){Text("P +${GameEconomy.arcadeReward}",Modifier.padding(horizontal=12.dp,vertical=7.dp),fontWeight=FontWeight.Black,color=Color.White)}
         }
         Text("Листай автоматы и выбирай игру",Modifier.padding(horizontal=16.dp),color=Color(0xFFE9D5FF),fontWeight=FontWeight.Bold)
         LazyRow(Modifier.weight(1f),contentPadding=PaddingValues(horizontal=18.dp),horizontalArrangement=Arrangement.spacedBy(14.dp),verticalAlignment=Alignment.CenterVertically){
@@ -186,12 +186,12 @@ private data class SpaceObject(val lane:Int,val crystal:Boolean,val icon:String)
 }
 
 @Composable private fun PairsGame(done:()->Unit){
-    val symbols=listOf("🍎","⭐","🎈","🐾","◎","💎");val cards=remember{(symbols+symbols).shuffled()};val open=remember{mutableStateListOf<Int>()};val matched=remember{mutableStateListOf<Int>()};var locked by remember{mutableStateOf(false)}
+    val symbols=listOf("🍎","⭐","🎈","🐾","P","💎");val cards=remember{(symbols+symbols).shuffled()};val open=remember{mutableStateListOf<Int>()};val matched=remember{mutableStateListOf<Int>()};var locked by remember{mutableStateOf(false)}
     LaunchedEffect(open.size){if(open.size==2){locked=true;delay(550);if(cards[open[0]]==cards[open[1]]){matched.addAll(open);FinnyAudio.play(FinnySfx.PLACE);if(matched.size>=cards.size)done()}else FinnyAudio.play(FinnySfx.WARNING);open.clear();locked=false}}
     FinnyCard(Modifier.fillMaxWidth()){
         Text("Пары: ${matched.size/2} / 6",fontSize=21.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65));Text("Открой две одинаковые карточки",color=Color(0xFF5A6780))
         Column(Modifier.align(Alignment.CenterHorizontally),verticalArrangement=Arrangement.spacedBy(8.dp)){repeat(3){r->Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){repeat(4){c->val i=r*4+c;val visible=i in open||i in matched;Surface(Modifier.size(69.dp).clickable(enabled=!locked&&i !in matched&&i !in open){open.add(i)},shape=RoundedCornerShape(14.dp),color=if(visible)Color(0xFFFFF2CB)else Color(0xFFF59E0B),border=BorderStroke(2.dp,Color(0xFFFFD54A)),shadowElevation=4.dp){Box(contentAlignment=Alignment.Center){Text(if(visible)cards[i] else "?",fontSize=31.sp,fontWeight=FontWeight.Black,color=Color.White)}}}}}}
-        Text("Запоминай расположение символов. Ошибка не забирает монеты — просто попробуй снова.",fontSize=13.sp,color=Color(0xFF5A6780))
+        Text("Запоминай расположение символов. Ошибка не забирает пари — просто попробуй снова.",fontSize=13.sp,color=Color(0xFF5A6780))
     }
 }
 
@@ -218,4 +218,4 @@ private data class SpaceObject(val lane:Int,val crystal:Boolean,val icon:String)
 @Composable private fun GameControl(label:String,modifier:Modifier=Modifier,onClick:()->Unit){Button(onClick=onClick,modifier=modifier.height(50.dp),shape=RoundedCornerShape(15.dp),contentPadding=PaddingValues(0.dp)){Text(label,fontSize=22.sp,fontWeight=FontWeight.Black)}}
 @Composable private fun ArcadeArrow(label:String,onClick:()->Unit){Surface(Modifier.size(52.dp).clickable(onClick=onClick),shape=CircleShape,color=Color(0xFF4169D8),shadowElevation=5.dp,border=androidx.compose.foundation.BorderStroke(2.dp,Color.White)){Box(contentAlignment=Alignment.Center){Text(label,color=Color.White,fontSize=20.sp,fontWeight=FontWeight.Black)}}}
 
-@Composable fun ArcadeResultScreen(onHome:()->Unit){Column(Modifier.fillMaxSize().navigationBarsPadding().background(gameBackground(Color(0xFF3565D6))).padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Surface(shape=RoundedCornerShape(32.dp),color=Color.White,border=BorderStroke(1.dp,Color(0xFFC8D8F2)),shadowElevation=10.dp){Column(Modifier.padding(28.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)){Icon(Icons.Default.EmojiEvents,null,Modifier.size(70.dp),tint=Color(0xFFE6A521));Text("Отличная игра!",fontSize=30.sp,fontWeight=FontWeight.Black,color=GameChrome.Ink);Surface(shape=CircleShape,color=Color(0xFFFFF0B8)){Text("+${GameEconomy.arcadeReward} монет",Modifier.padding(horizontal=25.dp,vertical=16.dp),fontSize=28.sp,fontWeight=FontWeight.Black,color=Color(0xFF8C5B05))};Text("Монеты уже добавлены в кошелёк. Аркада тренирует внимание и не начисляет учебные звёзды.",fontSize=17.sp,lineHeight=23.sp,textAlign=TextAlign.Center,color=GameChrome.Muted);FinnyButton("Вернуться домой",onHome,modifier=Modifier.fillMaxWidth())}}}}
+@Composable fun ArcadeResultScreen(onHome:()->Unit){Column(Modifier.fillMaxSize().navigationBarsPadding().background(gameBackground(Color(0xFF3565D6))).padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){Surface(shape=RoundedCornerShape(32.dp),color=Color.White,border=BorderStroke(1.dp,Color(0xFFC8D8F2)),shadowElevation=10.dp){Column(Modifier.padding(28.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)){Icon(Icons.Default.EmojiEvents,null,Modifier.size(70.dp),tint=Color(0xFFE6A521));Text("Отличная игра!",fontSize=30.sp,fontWeight=FontWeight.Black,color=GameChrome.Ink);Surface(shape=CircleShape,color=Color(0xFFFFF0B8)){Text("+${GameEconomy.arcadeReward} P",Modifier.padding(horizontal=25.dp,vertical=16.dp),fontSize=28.sp,fontWeight=FontWeight.Black,color=Color(0xFF8C5B05))};Text("пари уже добавлены в кошелёк. Аркада тренирует внимание и не начисляет учебные звёзды.",fontSize=17.sp,lineHeight=23.sp,textAlign=TextAlign.Center,color=GameChrome.Muted);FinnyButton("Вернуться домой",onHome,modifier=Modifier.fillMaxWidth())}}}}
