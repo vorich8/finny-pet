@@ -40,6 +40,7 @@ import com.finny.pet.domain.MoneyCard
 import com.finny.pet.audio.FinnyAudio
 import com.finny.pet.audio.FinnySfx
 import com.finny.pet.ui.components.FeedbackDialog
+import com.finny.pet.ui.components.ItemArtwork
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -208,7 +209,10 @@ private fun ScaleCardFace(card: MoneyCard) {
         "toy" -> "★"; "sweet" -> "🍬"; else -> "★"
     }
     Column(Modifier.fillMaxSize().padding(horizontal = 3.dp, vertical = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly) {
-        Text("$symbol  ${card.amount}", fontSize = 19.sp, fontWeight = FontWeight.Black, color = Color(0xFF263A65), maxLines = 1)
+        Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(4.dp)){
+            ItemArtwork(card.id,symbol,26.dp,"capsule")
+            Text(card.amount.toString(),fontSize=19.sp,fontWeight=FontWeight.Black,color=Color(0xFF263A65),maxLines=1)
+        }
         Text(card.title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF263A65), maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

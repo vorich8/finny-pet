@@ -110,7 +110,7 @@ private fun workGameIcon(id:String):ImageVector=when(id){
         Column(Modifier.fillMaxSize()){
             Surface(color=Color.White,shape=RoundedCornerShape(bottomStart=28.dp,bottomEnd=28.dp),shadowElevation=8.dp){Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically){IconButton(onClick=onBack){Icon(Icons.Default.ArrowBack,"Назад")};Surface(color=info.third.copy(.22f),shape=CircleShape){Icon(info.second,null,Modifier.padding(10.dp).size(25.dp),tint=info.third)};Spacer(Modifier.width(9.dp));Column(Modifier.weight(1f)){Text(info.first,fontSize=21.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65),maxLines=1,overflow=TextOverflow.Ellipsis);Text(when(id){"work"->"12 заданий • по 10 уровней";"bank"->"Недельная цель и накопления";"food","mall"->"Покупки без игровых наград";"home"->"Отдых, питомец и рюкзак";else->"Игровые тренировки"},fontSize=12.sp,color=Color(0xFF667085),maxLines=1,overflow=TextOverflow.Ellipsis)}}}
             if(id=="mall"){
-                Surface(Modifier.fillMaxWidth().padding(12.dp),shape=RoundedCornerShape(22.dp),color=Color.White,shadowElevation=7.dp){Row(Modifier.fillMaxWidth().padding(7.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){FilterChip(section==0,{section=0},{Text("Покупки")},Modifier.weight(1f),leadingIcon={Text("◎")});FilterChip(section==1,{section=1},{Text("Скины")},Modifier.weight(1f),leadingIcon={Text("✦")})}}
+                Surface(Modifier.fillMaxWidth().padding(12.dp),shape=RoundedCornerShape(22.dp),color=Color.White,shadowElevation=7.dp){Row(Modifier.fillMaxWidth().padding(7.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){FilterChip(section==0,{section=0},{Text("Покупки")},Modifier.weight(1f),leadingIcon={Icon(Icons.Default.ShoppingBag,null,Modifier.size(19.dp))});FilterChip(section==1,{section=1},{Text("Аксессуары")},Modifier.weight(1f),leadingIcon={Icon(Icons.Default.Checkroom,null,Modifier.size(19.dp))})}}
             }
             when{
                 id=="home"->ActionInterior("Дом — место отдыха и заботы. Здесь нет платных заданий.",listOf(("🎒" to "Открыть рюкзак") to Routes.Inventory,("💼" to "Идти на Работу") to Routes.building("work")),navigate)
@@ -210,7 +210,7 @@ private fun foodGoods(day:Int)=listOf(
     CityGood("medicine","💊","Лекарство","MEDICINE",20)
 )
 private val wantGoods=listOf(CityGood("ball","⚽","Весёлый мяч","WANT",28),CityGood("book","📘","Книга","WANT",22),CityGood("puzzle","★","Головоломка","WANT",35),CityGood("bow","🎀","Праздничный бант","WANT",18),CityGood("bed","🛏","Мягкая лежанка","WANT",55),CityGood("ice","🍦","Мороженое","WANT",14),CityGood("candy","🍬","Конфета","WANT",8),CityGood("pizza","🍕","Пицца","WANT",24))
-private val skinGoods=listOf(SkinGood("scarf_sun","Солнечный шарф","☀",30,3),SkinGood("hat_saver","Шапка-копилка","◆",45,3),SkinGood("glasses_smart","Умные очки","◎",60,4),SkinGood("cape_goal","Плащ цели","▲",80,5),SkinGood("crown_wise","Корона мудреца","♛",110,6))
+private val skinGoods=listOf(SkinGood("scarf_sun","Солнечный шарф",30,3),SkinGood("hat_saver","Шапка-копилка",45,3),SkinGood("glasses_smart","Умные очки",60,4),SkinGood("cape_goal","Плащ цели",80,5),SkinGood("crown_wise","Корона мудреца",110,6))
 
 private fun goodEffect(g:CityGood)=when(g.id){
     "food_fish"->"Еда +35";"food_bowl"->"Еда +30";"food_carrot"->"Еда +20";"food_apple"->"Еда +18";"food_berry"->"Еда +15"
@@ -228,8 +228,8 @@ private fun itemIcon(id:String,category:String):ImageVector=when(id){
 }
 
 @Composable private fun GoodIllustration(id:String,category:String,modifier:Modifier){
-    val picture=when(id){"food_bowl"->R.drawable.good_salad;"medicine"->R.drawable.good_medicine;"ice"->R.drawable.good_icecream;"candy"->R.drawable.good_candy;"pizza"->R.drawable.good_pizza;else->null}
-    Surface(modifier,shape=RoundedCornerShape(17.dp),color=if(id=="medicine"||id=="candy")Color(0xFF111527) else Color(0xFFFFF9EC)){
+    val picture=when(id){"food_bowl"->R.drawable.good_salad;"medicine"->R.drawable.icon_medicine_bottle;"ice"->R.drawable.good_icecream;"candy"->R.drawable.good_candy;"pizza"->R.drawable.good_pizza;else->null}
+    Surface(modifier,shape=RoundedCornerShape(17.dp),color=if(id=="candy")Color(0xFF111527) else Color(0xFFFFF9EC)){
         Box(contentAlignment=Alignment.Center){
             if(picture!=null)Image(painterResource(picture),id,Modifier.fillMaxSize().padding(3.dp),contentScale=ContentScale.Fit)
             else Icon(itemIcon(id,category),id,Modifier.size(32.dp),tint=when(category){"FOOD"->Color(0xFFB56A00);"WATER"->Color(0xFF287DB2);else->Color(0xFF7552A7)})
@@ -245,8 +245,8 @@ private fun itemIcon(id:String,category:String):ImageVector=when(id){
 }
 @Composable private fun SkinStore(level:Int,owned:List<com.finny.pet.data.database.SkinOwnershipEntity>,buy:(SkinGood)->Unit,equip:(SkinGood)->Unit){
     LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp),verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(bottom=24.dp)){
-        item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Color.White,shadowElevation=5.dp){Text("Скины меняют образ питомца, но не дают игровых преимуществ.",Modifier.padding(14.dp),fontSize=15.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF3D4E6C))}}
-        items(skinGoods){g->val item=owned.firstOrNull{it.skinId==g.id};val unlocked=level>=g.level;FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Surface(color=Color(0xFFFFEDF5),shape=CircleShape){Text(if(unlocked)g.icon else "×",Modifier.padding(13.dp),fontSize=28.sp)};Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(g.title,fontWeight=FontWeight.Bold,fontSize=18.sp,maxLines=2,overflow=TextOverflow.Ellipsis);Text(if(!unlocked)"Откроется на уровне ${g.level}" else if(item?.owned==true)"Уже в гардеробе" else "${g.price} монет",fontSize=13.sp,color=Color(0xFF667085),maxLines=2)};Spacer(Modifier.width(6.dp));Button(onClick={if(item?.owned==true)equip(g) else buy(g)},enabled=unlocked,shape=CircleShape,contentPadding=PaddingValues(horizontal=12.dp,vertical=9.dp)){Text(if(item?.equipped==true)"Надето" else if(item?.owned==true)"Надеть" else "Купить",fontSize=12.sp,fontWeight=FontWeight.Bold)}}}}
+        item{Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Color.White,shadowElevation=5.dp){Text("Аксессуары подходят каждому питомцу и меняют только его образ. Игровых преимуществ они не дают.",Modifier.padding(14.dp),fontSize=15.sp,fontWeight=FontWeight.SemiBold,color=Color(0xFF3D4E6C))}}
+        items(skinGoods){g->val item=owned.firstOrNull{it.skinId==g.id};val unlocked=level>=g.level;FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(68.dp),color=if(unlocked)Color(0xFFEAF1FF) else Color(0xFFF0F2F6),shape=RoundedCornerShape(20.dp)){Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){if(unlocked)SkinArtwork(g.id,Modifier.fillMaxSize().padding(5.dp)) else Icon(Icons.Default.Lock,null,Modifier.size(28.dp),tint=Color(0xFF8A94A7))}};Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(g.title,fontWeight=FontWeight.Bold,fontSize=18.sp,maxLines=2,overflow=TextOverflow.Ellipsis);Text(if(!unlocked)"Откроется на уровне ${g.level}" else if(item?.owned==true)"Уже в гардеробе" else "${g.price} монет",fontSize=14.sp,color=Color(0xFF596A84),maxLines=2)};Spacer(Modifier.width(6.dp));Button(onClick={if(item?.owned==true)equip(g) else buy(g)},enabled=unlocked,shape=CircleShape,contentPadding=PaddingValues(horizontal=12.dp,vertical=10.dp)){Text(if(item?.equipped==true)"Снять" else if(item?.owned==true)"Надеть" else "Купить",fontSize=13.sp,fontWeight=FontWeight.Bold)}}}}
     }
 }
 @Composable private fun ActionInterior(subtitle:String,actions:List<Pair<Pair<String,String>,String>>,navigate:(String)->Unit){
@@ -278,7 +278,7 @@ private fun itemIcon(id:String,category:String):ImageVector=when(id){
                     }
                 }
                 if(s.skins.any{it.owned})item{Text("Гардероб",fontSize=21.sp,fontWeight=FontWeight.ExtraBold,color=Color(0xFF263A65),modifier=Modifier.padding(top=8.dp))}
-                items(s.skins.filter{it.owned}){skin->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Text("✦",fontSize=32.sp,color=Color(0xFF8B62D6));Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(skin.title,fontWeight=FontWeight.Bold,fontSize=18.sp);Text(if(skin.equipped)"Надето" else "Можно надеть",color=Color(0xFF667085))};Button(onClick={vm.equip(skin)}){Text(if(skin.equipped)"Снять" else "Надеть")}}}}
+                items(s.skins.filter{it.owned}){skin->FinnyCard(Modifier.fillMaxWidth()){Row(verticalAlignment=Alignment.CenterVertically){Surface(Modifier.size(58.dp),shape=RoundedCornerShape(17.dp),color=Color(0xFFEAF1FF)){SkinArtwork(skin.skinId,Modifier.fillMaxSize().padding(4.dp))};Spacer(Modifier.width(12.dp));Column(Modifier.weight(1f)){Text(skin.title,fontWeight=FontWeight.Bold,fontSize=18.sp);Text(if(skin.equipped)"Надето" else "Можно надеть",color=Color(0xFF667085))};Button(onClick={vm.equip(skin)}){Text(if(skin.equipped)"Снять" else "Надеть")}}}}
             }
         }
     }

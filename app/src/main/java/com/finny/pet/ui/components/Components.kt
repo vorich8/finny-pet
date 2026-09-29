@@ -60,12 +60,17 @@ import com.finny.pet.ui.screens.VisualPrefs
     }
     val isSad=emotion.equals("SAD",true)||emotion.equals("SICK",true)||emotion.contains("груст",true)||emotion.contains("забот",true)||emotion.contains("бол",true)||emotion.contains("нездоров",true)
     val drawable=when(species){
-        "rabbit"->if(isSad)R.drawable.pet_rabbit_sad else R.drawable.pet_rabbit
-        "squirrel"->if(isSad)R.drawable.pet_squirrel_sad else R.drawable.pet_squirrel
-        "hamster"->R.drawable.pet_hamster
-        "axolotl"->R.drawable.pet_axolotl
-        "dragon"->R.drawable.pet_dragon
-        else->if(isSad)R.drawable.finny_fox_sad else R.drawable.finny_fox
+        "rabbit"->when{skinId=="scarf_sun"&&isSad->R.drawable.pet_rabbit_scarf_sun_sad;skinId=="scarf_sun"->R.drawable.pet_rabbit_scarf_sun;isSad->R.drawable.pet_rabbit_sad;else->R.drawable.pet_rabbit}
+        "squirrel"->when{skinId=="scarf_sun"&&isSad->R.drawable.pet_squirrel_scarf_sun_sad;skinId=="scarf_sun"->R.drawable.pet_squirrel_scarf_sun;isSad->R.drawable.pet_squirrel_sad;else->R.drawable.pet_squirrel}
+        "hamster"->if(skinId=="scarf_sun")R.drawable.pet_hamster_scarf_sun else R.drawable.pet_hamster
+        "axolotl"->if(skinId=="scarf_sun")R.drawable.pet_axolotl_scarf_sun else R.drawable.pet_axolotl
+        "dragon"->if(skinId=="scarf_sun")R.drawable.pet_dragon_scarf_sun else R.drawable.pet_dragon
+        else->when {
+            skinId=="scarf_sun"&&isSad->R.drawable.finny_fox_scarf_sun_sad
+            skinId=="scarf_sun"->R.drawable.finny_fox_scarf_sun
+            isSad->R.drawable.finny_fox_sad
+            else->R.drawable.finny_fox
+        }
     }
     val motion=rememberInfiniteTransition(label="petBreathing")
     val breathe by motion.animateFloat(.985f,1.015f,infiniteRepeatable(tween(1400,easing=EaseInOutSine),RepeatMode.Reverse),label="breathe")
@@ -73,9 +78,66 @@ import com.finny.pet.ui.screens.VisualPrefs
     Column(modifier, horizontalAlignment=Alignment.CenterHorizontally) {
         val petSize=sizeOverride?:when(stage.coerceIn(1,6)){1->170.dp;2->184.dp;3->196.dp;4->208.dp;5->220.dp;else->232.dp}
         val animate=VisualPrefs.animationsEnabled.value
-        Box(Modifier.size(petSize).graphicsLayer{scaleX=if(animate)breathe else 1f;scaleY=if(animate)breathe else 1f;translationY=if(animate)floatY else 0f},contentAlignment=Alignment.BottomCenter){Image(painterResource(drawable),"Питомец $name, стадия $stage",Modifier.fillMaxSize(),contentScale=ContentScale.Fit);skinId?.let{Surface(shape=CircleShape,color=Color(0xEEFFFFFF),shadowElevation=4.dp,modifier=Modifier.padding(bottom=5.dp)){Text(when(it){"weekly_winter"->"❄";"scarf_sun"->"☀";"hat_saver"->"◆";"glasses_smart"->"◎";"cape_goal"->"▲";else->"♛"},Modifier.padding(horizontal=13.dp,vertical=5.dp),fontSize=22.sp,color=Color(0xFF7D56C2))}}}
+        Box(Modifier.size(petSize).graphicsLayer{scaleX=if(animate)breathe else 1f;scaleY=if(animate)breathe else 1f;translationY=if(animate)floatY else 0f},contentAlignment=Alignment.BottomCenter){
+            Image(painterResource(drawable),"Питомец $name, стадия $stage",Modifier.fillMaxSize(),contentScale=ContentScale.Fit)
+            skinId?.takeUnless{it=="scarf_sun"}?.let{PetSkinOverlay(it,species,petSize)}
+        }
         if(showLabels){ Text(name,fontSize=24.sp,fontWeight=FontWeight.Bold); Text(if(emotion.equals("SICK",true))"Мне нужно лекарство" else if(isSad)"Нужна забота" else emotion,fontSize=16.sp,color=FinnyInk) }
     }
+}
+
+private fun skinDrawable(skinId:String)=when(skinId){
+    "scarf_sun"->R.drawable.skin_sun_scarf
+    "hat_saver","weekly_winter"->R.drawable.skin_saver_hat
+    "glasses_smart"->R.drawable.skin_smart_glasses
+    "cape_goal"->R.drawable.skin_goal_cape
+    else->R.drawable.skin_wisdom_crown
+}
+
+@Composable fun SkinArtwork(skinId:String,modifier:Modifier=Modifier){
+    Image(painterResource(skinDrawable(skinId)),skinId,modifier,contentScale=ContentScale.Fit)
+}
+
+@Composable fun MedicineArtwork(kind:String="bottle",modifier:Modifier=Modifier){
+    val drawable=when(kind){
+        "capsule"->R.drawable.icon_medicine_capsule
+        "syringe"->R.drawable.icon_medicine_syringe
+        else->R.drawable.icon_medicine_bottle
+    }
+    Image(painterResource(drawable),"Лекарство",modifier,contentScale=ContentScale.Fit)
+}
+
+@Composable fun ItemArtwork(id:String,fallback:String,size:Dp=48.dp,medicineKind:String="bottle"){
+    if(id=="medicine"||id=="med") MedicineArtwork(medicineKind,Modifier.size(size))
+    else Text(fallback,fontSize=(size.value*.62f).sp)
+}
+
+@Composable private fun BoxScope.PetSkinOverlay(skinId:String,species:String,petSize:Dp){
+    val (widthFactor,heightFactor,yFactor)=when(skinId){
+        "scarf_sun"->Triple(.35f,.235f,when(species){"rabbit"->.51f;"squirrel"->.50f;"hamster"->.46f;"axolotl"->.48f;"dragon"->.48f;else->.60f})
+        "hat_saver","weekly_winter"->when(species){
+            "rabbit"->Triple(.38f,.32f,.15f)
+            "squirrel"->Triple(.38f,.32f,.10f)
+            "hamster"->Triple(.34f,.29f,-.03f)
+            "axolotl"->Triple(.35f,.30f,.08f)
+            "dragon"->Triple(.34f,.29f,.06f)
+            else->Triple(.38f,.32f,.05f)
+        }
+        "glasses_smart"->Triple(.43f,.21f,when(species){"rabbit"->.39f;"squirrel"->.37f;"hamster"->.19f;"axolotl"->.34f;"dragon"->.30f;else->.33f})
+        "cape_goal"->Triple(.50f,.34f,when(species){"hamster"->.54f;"axolotl"->.52f;else->.55f})
+        else->when(species){
+            "rabbit"->Triple(.31f,.22f,.20f)
+            "squirrel"->Triple(.31f,.22f,.13f)
+            "hamster"->Triple(.28f,.20f,-.03f)
+            "axolotl"->Triple(.31f,.22f,.13f)
+            "dragon"->Triple(.31f,.22f,.04f)
+            else->Triple(.31f,.22f,.06f)
+        }
+    }
+    SkinArtwork(
+        skinId,
+        Modifier.align(Alignment.TopCenter).offset(y=petSize*yFactor).size(petSize*widthFactor,petSize*heightFactor)
+    )
 }
 @Composable fun CoinCounter(coins:Int,modifier:Modifier=Modifier) {
     Surface(modifier.widthIn(min=74.dp),shape=CircleShape,color=Color(0xFFFFF1B8),shadowElevation=4.dp){

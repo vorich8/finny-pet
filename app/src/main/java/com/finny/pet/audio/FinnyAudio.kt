@@ -10,14 +10,14 @@ import com.finny.pet.ui.screens.VisualPrefs
 
 /** Short, locally bundled effects. Playback never needs a network connection. */
 enum class FinnySfx(val resource: Int, val volume: Float) {
-    TAP(R.raw.sfx_tap, .78f),
-    NAVIGATE(R.raw.sfx_navigate, .82f),
-    PLACE(R.raw.sfx_place, .86f),
-    COIN(R.raw.sfx_coin, .90f),
-    WARNING(R.raw.sfx_warning, .86f),
-    PET(R.raw.sfx_pet, .88f),
-    SUCCESS(R.raw.sfx_success, 1f),
-    LEVEL_UP(R.raw.sfx_level_up, 1f),
+    TAP(R.raw.sfx_tap, .40f),
+    NAVIGATE(R.raw.sfx_navigate, .44f),
+    PLACE(R.raw.sfx_place, .52f),
+    COIN(R.raw.sfx_coin, .56f),
+    WARNING(R.raw.sfx_warning, .46f),
+    PET(R.raw.sfx_pet, .48f),
+    SUCCESS(R.raw.sfx_success, .60f),
+    LEVEL_UP(R.raw.sfx_level_up, .62f),
 }
 
 object FinnyAudio {
@@ -26,13 +26,14 @@ object FinnyAudio {
     private val samples = mutableMapOf<FinnySfx, Int>()
     private val loaded = mutableSetOf<Int>()
     private val pending = mutableSetOf<FinnySfx>()
+    private val lastPlayedAt = mutableMapOf<FinnySfx, Long>()
 
     @Synchronized
     fun initialize(context: Context) {
         if (pool != null) return
         appContext = context.applicationContext
         val attributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setUsage(AudioAttributes.USAGE_GAME)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
         val soundPool = SoundPool.Builder().setMaxStreams(8).setAudioAttributes(attributes).build()
@@ -52,12 +53,15 @@ object FinnyAudio {
 
     fun play(effect: FinnySfx) {
         if (!VisualPrefs.soundEnabled.value) return
+        val now = android.os.SystemClock.elapsedRealtime()
         val soundPool: SoundPool
         val sampleId: Int
         synchronized(this) {
             soundPool = pool ?: return
             sampleId = samples[effect] ?: return
             if (sampleId !in loaded) { pending.add(effect); return }
+            if (now - (lastPlayedAt[effect] ?: 0L) < 90L) return
+            lastPlayedAt[effect] = now
         }
         if (soundPool.play(sampleId, effect.volume, effect.volume, 1, 0, 1f) == 0) {
             Log.w("FinnyAudio", "SoundPool playback failed for $effect; trying MediaPlayer")

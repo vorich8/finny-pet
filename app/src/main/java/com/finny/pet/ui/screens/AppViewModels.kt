@@ -95,13 +95,13 @@ data class CityGood(val id:String,val icon:String,val title:String,val category:
     fun clear() {_state.value=StoreUiState()}
 }
 
-data class SkinGood(val id:String,val title:String,val icon:String,val price:Int,val level:Int)
+data class SkinGood(val id:String,val title:String,val price:Int,val level:Int)
 data class SkinShopUiState(val owned:List<com.finny.pet.data.database.SkinOwnershipEntity> = emptyList(),val message:String?=null,val pending:SkinGood?=null)
 @HiltViewModel class SkinShopViewModel @Inject constructor(skins:SkinRepository,private val buySkin:BuySkin,private val skinRepository:SkinRepository):ViewModel(){
     private val feedback=MutableStateFlow<Pair<String?,SkinGood?>>(null to null)
     val state=combine(skins.observeAll(),feedback){owned,f->SkinShopUiState(owned,f.first,f.second)}.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5000),SkinShopUiState())
     fun buy(g:SkinGood,confirmed:Boolean=false)=viewModelScope.launch{when(buySkin(g.id,g.title,g.price,confirmed)){SpendResult.SUCCESS->feedback.value="Скин добавлен в гардероб!" to null;SpendResult.NOT_ENOUGH->feedback.value="Монет пока не хватает. Выполни задание и возвращайся." to null;SpendResult.NEED_CONFIRMATION->feedback.value=null to g}}
-    fun equip(g:SkinGood)=viewModelScope.launch{skinRepository.get(g.id)?.let{skinRepository.equip(it)}}
+    fun equip(g:SkinGood)=viewModelScope.launch{skinRepository.get(g.id)?.let{if(it.equipped)skinRepository.unequipAll() else skinRepository.equip(it)}}
     fun clear(){feedback.value=null to null}
 }
 
