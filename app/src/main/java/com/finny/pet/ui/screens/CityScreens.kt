@@ -210,7 +210,7 @@ private fun foodGoods(day:Int)=listOf(
     CityGood("medicine","💊","Лекарство","MEDICINE",20)
 )
 private val wantGoods=listOf(CityGood("ball","⚽","Весёлый мяч","WANT",28),CityGood("book","📘","Книга","WANT",22),CityGood("puzzle","★","Головоломка","WANT",35),CityGood("bow","🎀","Праздничный бант","WANT",18),CityGood("bed","🛏","Мягкая лежанка","WANT",55),CityGood("ice","🍦","Мороженое","WANT",14),CityGood("candy","🍬","Конфета","WANT",8),CityGood("pizza","🍕","Пицца","WANT",24))
-private val skinGoods=listOf(SkinGood("scarf_sun","Солнечный шарф",30,3),SkinGood("hat_saver","Шапка-копилка",45,3),SkinGood("glasses_smart","Умные очки",60,4),SkinGood("cape_goal","Плащ цели",80,5),SkinGood("crown_wise","Корона мудреца",110,6))
+private val skinGoods=listOf(SkinGood("scarf_sun","Солнечный шарф",30,3),SkinGood("hoodie_color","Цветная кофта",50,3),SkinGood("hat_saver","Шапка-копилка",45,3),SkinGood("glasses_smart","Умные очки",60,4),SkinGood("cape_goal","Плащ цели",80,5),SkinGood("crown_wise","Корона мудреца",110,6))
 
 private fun goodEffect(g:CityGood)=when(g.id){
     "food_fish"->"Еда +35";"food_bowl"->"Еда +30";"food_carrot"->"Еда +20";"food_apple"->"Еда +18";"food_berry"->"Еда +15"

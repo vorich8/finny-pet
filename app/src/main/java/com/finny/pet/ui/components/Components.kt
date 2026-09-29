@@ -3,6 +3,7 @@ package com.finny.pet.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +20,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -95,7 +99,24 @@ private fun skinDrawable(skinId:String)=when(skinId){
 }
 
 @Composable fun SkinArtwork(skinId:String,modifier:Modifier=Modifier){
-    Image(painterResource(skinDrawable(skinId)),skinId,modifier,contentScale=ContentScale.Fit)
+    if(skinId=="hoodie_color") SweaterArtwork(Color(0xFF4D78E8),modifier)
+    else Image(painterResource(skinDrawable(skinId)),skinId,modifier,contentScale=ContentScale.Fit)
+}
+
+@Composable private fun SweaterArtwork(color:Color,modifier:Modifier=Modifier){
+    Canvas(modifier){
+        val dark=Color(
+            red=(color.red*.72f).coerceIn(0f,1f),
+            green=(color.green*.72f).coerceIn(0f,1f),
+            blue=(color.blue*.72f).coerceIn(0f,1f)
+        )
+        drawRoundRect(color,Offset(size.width*.18f,size.height*.18f),Size(size.width*.64f,size.height*.72f),CornerRadius(size.width*.16f))
+        drawRoundRect(color,Offset(size.width*.04f,size.height*.25f),Size(size.width*.25f,size.height*.48f),CornerRadius(size.width*.12f))
+        drawRoundRect(color,Offset(size.width*.71f,size.height*.25f),Size(size.width*.25f,size.height*.48f),CornerRadius(size.width*.12f))
+        drawOval(Color(0xFFFFF5E8),Offset(size.width*.37f,size.height*.08f),Size(size.width*.26f,size.height*.22f))
+        drawRoundRect(dark,Offset(size.width*.20f,size.height*.78f),Size(size.width*.60f,size.height*.10f),CornerRadius(size.width*.05f))
+        drawCircle(Color.White.copy(alpha=.9f),size.width*.035f,Offset(size.width*.50f,size.height*.50f))
+    }
 }
 
 @Composable fun MedicineArtwork(kind:String="bottle",modifier:Modifier=Modifier){
@@ -113,25 +134,45 @@ private fun skinDrawable(skinId:String)=when(skinId){
 }
 
 @Composable private fun BoxScope.PetSkinOverlay(skinId:String,species:String,petSize:Dp){
+    if(skinId=="hoodie_color"){
+        val color=when(species){
+            "rabbit"->Color(0xFFE98BAF)
+            "squirrel"->Color(0xFF55A96F)
+            "hamster"->Color(0xFF6F8FEA)
+            "axolotl"->Color(0xFF9A72DA)
+            "dragon"->Color(0xFFE8894C)
+            else->Color(0xFF3FA9C8)
+        }
+        val (w,h,y)=when(species){
+            "rabbit"->Triple(.50f,.30f,.55f)
+            "squirrel"->Triple(.50f,.30f,.54f)
+            "hamster"->Triple(.51f,.30f,.55f)
+            "axolotl"->Triple(.48f,.29f,.57f)
+            "dragon"->Triple(.49f,.29f,.55f)
+            else->Triple(.50f,.30f,.56f)
+        }
+        SweaterArtwork(color,Modifier.align(Alignment.TopCenter).offset(y=petSize*y).size(petSize*w,petSize*h))
+        return
+    }
     val (widthFactor,heightFactor,yFactor)=when(skinId){
         "scarf_sun"->Triple(.35f,.235f,when(species){"rabbit"->.51f;"squirrel"->.50f;"hamster"->.46f;"axolotl"->.48f;"dragon"->.48f;else->.60f})
         "hat_saver","weekly_winter"->when(species){
-            "rabbit"->Triple(.38f,.32f,.15f)
-            "squirrel"->Triple(.38f,.32f,.10f)
-            "hamster"->Triple(.34f,.29f,-.03f)
-            "axolotl"->Triple(.35f,.30f,.08f)
-            "dragon"->Triple(.34f,.29f,.06f)
-            else->Triple(.38f,.32f,.05f)
+            "rabbit"->Triple(.34f,.29f,.16f)
+            "squirrel"->Triple(.34f,.29f,.11f)
+            "hamster"->Triple(.31f,.26f,.00f)
+            "axolotl"->Triple(.32f,.27f,.10f)
+            "dragon"->Triple(.31f,.26f,.08f)
+            else->Triple(.34f,.29f,.07f)
         }
-        "glasses_smart"->Triple(.43f,.21f,when(species){"rabbit"->.39f;"squirrel"->.37f;"hamster"->.19f;"axolotl"->.34f;"dragon"->.30f;else->.33f})
-        "cape_goal"->Triple(.50f,.34f,when(species){"hamster"->.54f;"axolotl"->.52f;else->.55f})
+        "glasses_smart"->Triple(.38f,.19f,when(species){"rabbit"->.40f;"squirrel"->.38f;"hamster"->.22f;"axolotl"->.35f;"dragon"->.32f;else->.35f})
+        "cape_goal"->Triple(.43f,.30f,when(species){"hamster"->.56f;"axolotl"->.54f;else->.57f})
         else->when(species){
-            "rabbit"->Triple(.31f,.22f,.20f)
-            "squirrel"->Triple(.31f,.22f,.13f)
-            "hamster"->Triple(.28f,.20f,-.03f)
-            "axolotl"->Triple(.31f,.22f,.13f)
-            "dragon"->Triple(.31f,.22f,.04f)
-            else->Triple(.31f,.22f,.06f)
+            "rabbit"->Triple(.27f,.19f,.21f)
+            "squirrel"->Triple(.27f,.19f,.15f)
+            "hamster"->Triple(.25f,.18f,.00f)
+            "axolotl"->Triple(.27f,.19f,.15f)
+            "dragon"->Triple(.27f,.19f,.06f)
+            else->Triple(.27f,.19f,.08f)
         }
     }
     SkinArtwork(
